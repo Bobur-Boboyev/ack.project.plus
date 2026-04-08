@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     PGSSLMODE: str
     PGCHANNELBINDING: str
 
+    SECRET_KEY: str
+    ALGORITHM: str
+    EXPIRE_MINUTES: int
+
     class Config:
         env_file = ".env"
 

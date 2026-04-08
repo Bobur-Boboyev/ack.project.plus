@@ -9,13 +9,13 @@ from app.services import UserService
 from app.models import User
 
 
-router = APIRouter(tags=["Admin"])
+router = APIRouter(prefix="/v1/admin", tags=["Admin"],)
 
 
 @router.post(
-    "/v1/admin/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-async def create_user_view(
+def create_user_view(
     data: Annotated[CreateUser, Body()],
     admin: Annotated[User, Depends(get_admin)],
     db: Annotated[Session, Depends(get_db)],

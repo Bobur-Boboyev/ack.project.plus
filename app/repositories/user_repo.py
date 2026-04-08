@@ -31,7 +31,7 @@ class UserRepository:
         self.db.refresh(user)
 
         return user
-    
+
     def update_user(self, user: User, data: AdminUpdateUser) -> User:
 
         if data.first_name:
@@ -56,11 +56,11 @@ class UserRepository:
         self.db.refresh(user)
 
         return user
-    
+
     def delete_user(self, user: User) -> dict:
         user.is_active = False
         self.db.commit()
-        
+
         return {"detail": "User deactivated"}
 
     def get_by_email(self, email: str) -> User:
@@ -81,6 +81,6 @@ class UserRepository:
             )
 
         return query.offset(skip).limit(limit).all()
-    
+
     def get_user_by_id(self, id: int) -> User:
         return self.db.query(User).filter(User.id == id).first()

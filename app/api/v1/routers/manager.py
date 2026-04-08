@@ -29,5 +29,3 @@ def get_projects_view(
 ):
     repository = ProjectRepository(db)
     return repository.get_manager_projects(manager)
-
-

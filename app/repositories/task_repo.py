@@ -23,14 +23,10 @@ class TaskRepository:
         self.db.refresh(task)
 
         return task
-    
+
     def get_worker_tasks(self, worker: User):
-        return (
-            self.db.query(Task)
-            .filter(Task.assigned_to_id == worker.id)
-            .all()
-        )
-    
+        return self.db.query(Task).filter(Task.assigned_to_id == worker.id).all()
+
     def task_submission(self, data: TaskSubmitRequesta, worker: User, task: Task):
         submission = TaskSubmission(
             task_id=task.id,
@@ -43,6 +39,6 @@ class TaskRepository:
         self.db.refresh(submission)
 
         return submission
-    
+
     def get_task_by_id(self, id: int) -> Task:
         return self.db.query(Task).filter(Task.id == id).first()

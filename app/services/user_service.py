@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -54,7 +52,7 @@ class UserService:
         if data.email and data.email != user.email:
             if self.repo.get_by_email(data.email):
                 raise HTTPException(400, "Email already exists")
-            
+
         if data.password:
             data.password = hash_password(password=data.password)
 

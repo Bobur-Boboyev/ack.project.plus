@@ -20,7 +20,7 @@ class AdminUpdateUser(BaseModel):
         if value is not None and not value.strip():
             raise ValueError("Cannot be empty or whitespace only")
         return value
-    
+
     @model_validator(mode="after")
     def validate_passwords(self):
         if self.password or self.confirm_password:

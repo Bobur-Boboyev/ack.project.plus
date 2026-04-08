@@ -39,7 +39,7 @@ class TaskService:
             raise HTTPException(400, "Deadline must be in the future")
 
         return self.task_repo.create_task(data=data, manager=manager)
-    
+
     def submit_task(self, task_id: int, worker: User, data: TaskSubmitRequest):
 
         task = self.task_repo.get_task_by_id(task_id)

@@ -22,13 +22,9 @@ class ProjectRepository:
         self.db.refresh(project)
 
         return project
-    
+
     def get_manager_projects(self, manager: User) -> Project:
-         return (
-            self.db.query(Project)
-            .filter(Project.manager_id == manager.id)
-            .all()
-        )
-    
+        return self.db.query(Project).filter(Project.manager_id == manager.id).all()
+
     def get_project_by_id(self, id: int) -> Project:
         return self.db.query(Project).filter(Project.id == id).first()

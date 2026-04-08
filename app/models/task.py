@@ -20,9 +20,7 @@ class TaskStatus(str, enum.Enum):
 class Task(Base, TimeStampMixin):
     __tablename__ = "tasks"
 
-    __table_args__ = (
-    Index("idx_task_assigned_to_status", "assigned_to_id", "status"),
-)
+    __table_args__ = (Index("idx_task_assigned_to_status", "assigned_to_id", "status"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     project_id: Mapped[int] = mapped_column(

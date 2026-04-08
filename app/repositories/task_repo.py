@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models import Project, User, Task, TaskSubmission
-from app.schemas.task import CreateTask, TaskSubmitRequesta
+from app.schemas.task import CreateTask, TaskSubmitRequest
 
 
 class TaskRepository:
@@ -27,7 +27,7 @@ class TaskRepository:
     def get_worker_tasks(self, worker: User):
         return self.db.query(Task).filter(Task.assigned_to_id == worker.id).all()
 
-    def task_submission(self, data: TaskSubmitRequesta, worker: User, task: Task):
+    def task_submission(self, data: TaskSubmitRequest, worker: User, task: Task):
         submission = TaskSubmission(
             task_id=task.id,
             worker_id=worker.id,

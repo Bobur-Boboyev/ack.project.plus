@@ -4,9 +4,10 @@ from fastapi import APIRouter, Body, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
-from app.schemas.auth import LoginRequest, LoginResponse
+from app.schemas.auth import LoginRequest, LoginResponse, RefreshRequest
 from app.repositories import UserRepository
-from app.core.security import verify_password, generate_token
+from app.core.security import verify_password, generate_token, generate_refresh_token
+from app.services.auth_service import AuthService
 
 router = APIRouter(tags=["Auth"])
 
@@ -19,17 +20,19 @@ def login_view(
 
     user = user_repository.get_by_username(data.username)
 
-    if not user:
+    if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
 
-    if not verify_password(data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-        )
+    token_data = {"sub": user.id, "username": user.username}
 
-    token_data = {"username": user.username}
     access_token = generate_token(token_data)
+    refresh_token = generate_refresh_token(token_data)
 
-    return LoginResponse(access_token=access_token)
+    return LoginResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/refresh", response_model=LoginResponse)
+def refresh(data: RefreshRequest, auth_service: Annotated[AuthService, Depends()]):
+    return auth_service.refresh_access_token(data.refresh_token)

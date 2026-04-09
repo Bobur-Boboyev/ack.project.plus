@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.core.security import verify_token
+from app.core.security import verify_access_token
 from app.models import User
 from app.db.session import SessionLocal
 
@@ -24,7 +24,7 @@ def get_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    payload = verify_token(token)
+    payload = verify_access_token(token)
 
     username = payload.get("username")
     if not username:

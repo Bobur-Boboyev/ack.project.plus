@@ -19,16 +19,33 @@ def verify_password(plain_password, hashed_password) -> bool:
 
 def generate_token(data: dict) -> str:
     payload = data.copy()
+    payload["type"] = "access"
     payload["exp"] = datetime.utcnow() + timedelta(minutes=settings.EXPIRE_MINUTES)
 
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def verify_token(token: str) -> dict:
-    try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
+def generate_refresh_token(data: dict) -> str:
+    payload = data.copy()
+    payload["type"] = "refresh"
+    payload["exp"] = datetime.utcnow() + timedelta(days=settings.REFRESH_EXPIRE_DAYS)
+
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def verify_access_token(token: str) -> dict:
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+
+    if payload.get("type") != "access":
+        raise HTTPException(401, "Invalid token type")
+
+    return payload
+
+
+def verify_refresh_token(token: str) -> dict:
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+
+    if payload.get("type") != "refresh":
+        raise HTTPException(401, "Invalid refresh token")
+
+    return payload

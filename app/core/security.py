@@ -25,7 +25,7 @@ def verify_password(plain_password, hashed_password) -> bool:
 
 
 def generate_token(data: dict) -> str:
-    payload = data.copy()   
+    payload = data.copy()
     payload["type"] = "access"
     payload["exp"] = datetime.utcnow() + timedelta(minutes=settings.EXPIRE_MINUTES)
 

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.repository.user_repo import UserRepo
 from app.schemas.auth import UserLoginResponse
-from app.core.security import  
+from app.core.security import generate_token, generate_refresh_token
 
 
 class UserService:
@@ -20,5 +20,10 @@ class UserService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid username or password"
             )
+        
+        token_data = {"sub": f"{user.id}"}
 
-        return 0
+        return UserLoginResponse(
+            access_token=generate_token(token_data),
+            refresh_token=generate_refresh_token(token_data)
+        )

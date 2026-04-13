@@ -4,9 +4,11 @@ from fastapi import APIRouter, status, Depends, Body
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
-from app.schemas.auth import UserLoginResponse, RefreshRequest
-from app.core.deps import get_db
+from app.models import user
+from app.schemas.auth import UserLoginResponse, RefreshRequest, ChangePasswordRequest
+from app.core.deps import get_db, get_current_user
 from app.services.user_service import UserService
+from app.models.user import User
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -32,3 +34,42 @@ async def refresh_view(
     user_service = UserService(db)
     refresh_response = user_service.refresh_access_token(data.refresh_token)
     return refresh_response
+
+
+@router.post("/logout")
+async def logout(
+    refresh_token: str,
+    db: Annotated[Session, Depends(get_db)]
+):
+    service = UserService(db)
+    service.logout(db, refresh_token)
+    
+    return {"message": "Logged out"}
+
+
+@router.post("/change-password")
+async def change_password_view(
+    data: ChangePasswordRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    service = UserService(db)
+    
+    service.change_password(
+        user=current_user,
+        old_password=data.old_password,
+        new_password=data.new_password
+    )
+
+    return {"message": "Password changed successfully"}
+
+
+@router.post("/me")
+async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "role": current_user.role,
+        "is_active": current_user.is_active,
+        "is_first_login": current_user.is_first_login
+    }

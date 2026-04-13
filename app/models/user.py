@@ -35,3 +35,4 @@ class User(Base):
     task_assignments: Mapped[List["TaskAssignment"]] = relationship(
         "TaskAssignment", back_populates="user"
     )
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")

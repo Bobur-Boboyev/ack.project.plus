@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserLoginResponse(BaseModel):
@@ -9,3 +9,8 @@ class UserLoginResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=8)

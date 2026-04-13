@@ -1,15 +1,11 @@
-from typing import Annotated
 from datetime import datetime, timedelta
 
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import jwt
-from fastapi import HTTPException, Depends, status
-from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from app.core.config import settings
-from app.models.user import User
-from app.core.deps import get_db
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -56,44 +52,3 @@ def verify_refresh_token(token: str) -> dict:
         raise HTTPException(401, "Invalid refresh token")
 
     return payload
-
-
-def get_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[Session, Depends(get_db)],
-) -> User:
-    payload = verify_access_token(token)
-
-    sub = payload.get("sub")
-    if not sub:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
-
-    user = db.query(User).filter_by(id=sub).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-        )
-
-    return user
-
-
-def require_role(required_role: str):
-    def role_checker(user: Annotated[User, Depends(get_user)]) -> User:
-        if user.role != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Requires {required_role} role",
-            )
-        return user
-
-    return role_checker
-
-
-get_admin = require_role("admin")
-get_manager = require_role("manager")
-get_worker = require_role("worker")

@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
 from app.api import router
-from app.db.init_db import create_tables
+from app.db.init_db import create_tables, drop_tables
 
-
+drop_tables()
 create_tables()
 
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import user
 from app.schemas.auth import UserLoginResponse, RefreshRequest, ChangePasswordRequest
-from app.core.deps import get_db, get_current_user
+from app.core.deps import get_db, get_user
 from app.services.user_service import UserService
 from app.models.user import User
 
@@ -39,7 +39,8 @@ async def refresh_view(
 @router.post("/logout")
 async def logout(
     refresh_token: str,
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[Session, Depends(get_user)]
 ):
     service = UserService(db)
     service.logout(db, refresh_token)
@@ -51,7 +52,7 @@ async def logout(
 async def change_password_view(
     data: ChangePasswordRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_user)]
 ):
     service = UserService(db)
     
@@ -65,7 +66,7 @@ async def change_password_view(
 
 
 @router.post("/me")
-async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+async def get_me(current_user: Annotated[User, Depends(get_user)]):
     return {
         "id": current_user.id,
         "username": current_user.username,

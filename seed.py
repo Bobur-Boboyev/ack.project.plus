@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User, UserRole
 from app.core.security import hash_password
+from app.core.deps import get_db
 
 
 def seed_users(db: Session):
@@ -27,9 +28,7 @@ def seed_users(db: Session):
     ]
 
     for user_data in users_to_create:
-        existing_user = db.query(User).filter(
-            User.email == user_data["email"]
-        ).first()
+        existing_user = db.query(User).filter(User.email == user_data["email"]).first()
 
         if existing_user:
             continue
@@ -46,3 +45,6 @@ def seed_users(db: Session):
         db.add(user)
 
     db.commit()
+
+
+seed_users(next(get_db()))

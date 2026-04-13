@@ -10,13 +10,22 @@ class UserRepo:
 
     def get_user_by_username(self, username: str):
         return self.db.query(User).filter(User.username == username).first()
-    
+
     def get_user_by_id(self, id: int):
         return self.db.query(User).filter(User.id == id).first()
 
-    def get_refresh_token(self, refresh_token: str):
-        return self.db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
-    
+    def create_refresh_token(self, user: User, refresh_token: str, jti: str):
+        token = RefreshToken(user_id=user.id, token=refresh_token, jti=jti)
+
+        self.db.add(token)
+        self.db.commit()
+        self.db.refresh(token)
+
+        return token
+
+    def get_refresh_token_by_jti(self, jti: str):
+        return self.db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
+
     def revoke_refresh_token(self, token: RefreshToken):
         token.is_revoked = True
         self.db.add(token)
@@ -29,5 +38,5 @@ class UserRepo:
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
-        
+
         return user

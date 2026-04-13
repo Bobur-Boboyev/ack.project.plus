@@ -40,11 +40,11 @@ async def refresh_view(
 async def logout(
     refresh_token: str,
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[Session, Depends(get_user)]
+    user: Annotated[User, Depends(get_user)],
 ):
     service = UserService(db)
-    service.logout(db, refresh_token)
-    
+    service.logout(refresh_token)
+
     return {"message": "Logged out"}
 
 
@@ -52,14 +52,14 @@ async def logout(
 async def change_password_view(
     data: ChangePasswordRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_user)]
+    current_user: Annotated[User, Depends(get_user)],
 ):
     service = UserService(db)
-    
+
     service.change_password(
         user=current_user,
         old_password=data.old_password,
-        new_password=data.new_password
+        new_password=data.new_password,
     )
 
     return {"message": "Password changed successfully"}
@@ -72,5 +72,5 @@ async def get_me(current_user: Annotated[User, Depends(get_user)]):
         "username": current_user.username,
         "role": current_user.role,
         "is_active": current_user.is_active,
-        "is_first_login": current_user.is_first_login
+        "is_first_login": current_user.is_first_login,
     }

@@ -28,13 +28,9 @@ class TaskAssignment(Base):
 
     task: Mapped["Task"] = relationship("Task", back_populates="assignments")
     user: Mapped["User"] = relationship(
-    "User",
-    foreign_keys=[user_id],
-    back_populates="task_assignments"
+        "User", foreign_keys=[user_id], back_populates="task_assignments"
     )
 
     assigner: Mapped[Optional["User"]] = relationship(
-        "User",
-        foreign_keys=[assigned_by],
-        back_populates="assigned_tasks"
+        "User", foreign_keys=[assigned_by], back_populates="assigned_tasks"
     )

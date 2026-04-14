@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import HTTPException, status
 from fastapi.security import HTTPBasicCredentials
 from sqlalchemy.orm import Session
@@ -9,66 +11,81 @@ from app.core.security import (
     generate_refresh_token,
     verify_refresh_token,
     verify_password,
-    hash_password
+    hash_password,
 )
-from app.models.user import User
+from app.models import User
 
 
 class UserService:
-    def __init__(self, db):
+    def __init__(self, db: Session):
         self.db = db
         self.repo = UserRepo(db)
 
     def authenticate_user(self, credentials: HTTPBasicCredentials):
         user = self.repo.get_user_by_username(credentials.username)
 
-        if not user or user.password != credentials.password:
+        if not user or not verify_password(credentials.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid username or password",
             )
 
-        token_data = {"sub": f"{user.id}"}
+        access_token = generate_token({"sub": str(user.id)})
+
+        refresh_jti = str(uuid.uuid4())
+        refresh_token_str = generate_refresh_token(
+            {"sub": str(user.id), "jti": refresh_jti}
+        )
+
+        self.repo.create_refresh_token(
+            user=user, refresh_token=refresh_token_str, jti=refresh_jti
+        )
 
         return UserLoginResponse(
-            access_token=generate_token(token_data),
-            refresh_token=generate_refresh_token(token_data),
+            access_token=access_token, refresh_token=refresh_token_str
         )
 
     def refresh_access_token(self, refresh_token: str) -> UserLoginResponse:
         payload = verify_refresh_token(refresh_token)
 
-        user_id = payload.get("sub")
+        print(payload)
+
+        user_id = int(payload["sub"])
+        jti = payload["jti"]
 
         user = self.repo.get_user_by_id(user_id)
+        db_token = self.repo.get_refresh_token_by_jti(jti)
 
-        if not user:
+        if not user or not db_token or db_token.is_revoked:
+            raise HTTPException(401, "Invalid token")
+
+        new_access = generate_token({"sub": str(user.id)})
+
+        return UserLoginResponse(access_token=new_access, refresh_token=refresh_token)
+
+    def logout(self, refresh_token: str):
+        payload = verify_refresh_token(refresh_token)
+
+        jti = payload.get("jti")
+
+        db_token = self.repo.get_refresh_token_by_jti(jti)
+
+        if not db_token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-        new_access_token = generate_token({"sub": f"{user.id}"})
-
-        return UserLoginResponse(
-            access_token=new_access_token, refresh_token=refresh_token
-        )
-
-    def logout(self, refresh_token: str):
-        token = self.repo.get_refresh_token(refresh_token)
-
-        if not token:
-            raise Exception("Token not found")
-        
-        token.is_revoked = True
-        self.db.commit()
+        self.repo.revoke_refresh_token(db_token)
 
     def change_password(self, user: User, old_password: str, new_password: str):
         if not verify_password(old_password, user.password_hash):
             raise HTTPException(status_code=400, detail="Old password incorrect")
-        
+
         if verify_password(new_password, user.password_hash):
-            raise HTTPException(status_code=400, detail="New password must be different")
-        
+            raise HTTPException(
+                status_code=400, detail="New password must be different"
+            )
+
         new_hash = hash_password(new_password)
 
         self.repo.update_password(user, new_hash)

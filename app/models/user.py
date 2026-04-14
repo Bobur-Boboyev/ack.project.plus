@@ -33,13 +33,11 @@ class User(Base):
         "Project", back_populates="manager"
     )
     task_assignments: Mapped[List["TaskAssignment"]] = relationship(
-    "TaskAssignment",
-    foreign_keys="TaskAssignment.user_id",
-    back_populates="user"
+        "TaskAssignment", foreign_keys="TaskAssignment.user_id", back_populates="user"
     )
     assigned_tasks: Mapped[List["TaskAssignment"]] = relationship(
         "TaskAssignment",
         foreign_keys="TaskAssignment.assigned_by",
-        back_populates="assigner"
+        back_populates="assigner",
     )
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")

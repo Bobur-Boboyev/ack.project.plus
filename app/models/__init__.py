@@ -12,3 +12,4 @@ from app.models.task_assignment import TaskAssignment
 from app.models.task_status_history import TaskStatusHistory
 from app.models.task import Task
 from app.models.user_profile import UserProfile
+from app.models.refresh_token import RefreshToken

@@ -37,3 +37,11 @@ class ProjectResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AddProjectMemberRequest(BaseModel):
+    user_id: int
+
+
+class UpdateProjectStatusRequest(BaseModel):
+    status: ProjectStatus

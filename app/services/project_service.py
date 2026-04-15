@@ -7,6 +7,16 @@ from app.models.user import User, UserRole
 from app.models.project import ProjectStatus
 
 
+ALLOWED_TRANSITIONS = {
+    "draft": ["assigned"],
+    "assigned": ["active", "on_hold"],
+    "active": ["on_hold", "completed"],
+    "on_hold": ["active"],
+    "completed": ["archived"],
+    "archived": []
+}
+
+
 class ProjectService:
     def __init__(self, db: Session):
         self.repo = ProjectRepo(db)
@@ -86,3 +96,58 @@ class ProjectService:
             return project
 
         raise HTTPException(403, "Access denied")
+
+    def add_member(self, project_id: int, user_id: int, current_user):
+
+        project = self.repo.get_project_by_id(project_id)
+
+        if not project:
+            raise HTTPException(404, "Project not found")
+
+        if current_user.role == UserRole.ADMIN:
+            pass
+
+        elif current_user.role == UserRole.MANAGER:
+            if project.manager_id != current_user.id:
+                raise HTTPException(403, "Access denied")
+
+        else:
+            raise HTTPException(403, "Only admin or manager")
+
+        user = self.repo.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(404, "User not found")
+
+        if user.role != UserRole.WORKER:
+            raise HTTPException(400, "Only worker can be added")
+
+        if self.repo.is_member(project_id, user_id):
+            raise HTTPException(400, "Already member")
+
+        return self.repo.add_member(project_id, user_id)
+    
+    def update_project_status(self, project_id: int, new_status, current_user):
+
+        project = self.repo.get_project_by_id(project_id)
+
+        if not project:
+            raise HTTPException(404, "Project not found")
+
+        if current_user.role == UserRole.ADMIN:
+            pass
+
+        elif current_user.role == UserRole.MANAGER:
+            if project.manager_id != current_user.id:
+                raise HTTPException(403, "Access denied")
+
+        else:
+            raise HTTPException(403, "Only admin or manager")
+
+        current_status = project.status
+
+        if new_status not in ALLOWED_TRANSITIONS[current_status]:
+            raise HTTPException(400, f"Invalid transition: {current_status} -> {new_status}")
+
+        project.status = new_status
+
+        return self.repo.update_project(project)

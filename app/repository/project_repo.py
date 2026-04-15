@@ -44,3 +44,28 @@ class ProjectRepo:
             .first()
             is not None
         )
+
+    def add_member(self, project_id: int, user_id: int):
+        member = ProjectMember(
+            project_id=project_id,
+            user_id=user_id,
+            role="worker"
+        )
+
+        self.db.add(member)
+        self.db.commit()
+        self.db.refresh(member)
+
+        return member
+    
+    def is_member(self, project_id: int, user_id: int):
+        return self.db.query(ProjectMember).filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user_id
+        ).first()
+    
+    def update_project(self, project):
+        self.db.add(project)
+        self.db.commit()
+        self.db.refresh(project)
+        return project

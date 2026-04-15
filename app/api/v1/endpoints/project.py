@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_admin, get_db, get_user
-from app.schemas.project import ProjectCreateRequest, ProjectResponse
+from app.schemas.project import (
+    ProjectCreateRequest, 
+    ProjectResponse, 
+    UpdateProjectStatusRequest, 
+    # AddProjectMemberRequest,
+    AssignManagerRequest
+)
 from app.services.project_service import ProjectService
 from app.models.user import User
 
@@ -55,3 +61,57 @@ def get_project_by_id(
     project = service.get_project_detail(project_id, current_user)
 
     return project
+
+
+@router.patch("/{project_id}/status")
+def update_project_status(
+    project_id: int,
+    data: UpdateProjectStatusRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[Session, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    project = service.update_project_status(
+        project_id=project_id,
+        new_status=data.status,
+        current_user=current_user
+    )
+
+    return project
+
+
+@router.patch("/{project_id}/assign-manager")
+def assign_manager(
+    project_id: int,
+    data: AssignManagerRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    project = service.assign_manager(
+        project_id=project_id,
+        manager_id=data.manager_id,
+        current_user=current_user
+    )
+
+    return project
+
+
+# @router.post("/{project_id}/members", status_code=201)
+# def add_member(
+#     project_id: int,
+#     data: AddProjectMemberRequest,
+#     db: Annotated[Session, Depends(get_db)],
+#     current_user:  Annotated[Session, Depends(get_user)],
+# ):
+#     service = ProjectService(db)
+
+#     service.add_member(
+#         project_id=project_id,
+#         user_id=data.user_id,
+#         current_user=current_user
+#     )
+
+#     return {"message": "Member added"}

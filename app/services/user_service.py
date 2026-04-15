@@ -5,6 +5,9 @@ from fastapi.security import HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.repository.user_repo import UserRepo
+from app.repository.project_repo import ProjectRepo
+from app.repository.task_repo import TaskRepo
+from app.repository.report_repo import ReportRepo
 from app.schemas.auth import UserLoginResponse, ChangePasswordRequest
 from app.schemas.user import CreateUser, UpdateUserData
 from app.core.security import (
@@ -15,21 +18,25 @@ from app.core.security import (
     hash_password,
 )
 from app.models import User
+from app.models.user import UserRole
 
 
 class UserService:
     def __init__(self, db: Session):
         self.db = db
-        self.repo = UserRepo(db)
+        self.user_repo = UserRepo(db)
+        self.project_repo = ProjectRepo(db)
+        self.task_repo = TaskRepo(db)
+        self.report_repo = ReportRepo(db)
 
     def create_user(self, data: CreateUser) -> User:
-        user = self.repo.get_user_by_username(data.username)
+        user = self.user_repo.get_user_by_username(data.username)
 
         if user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="username already exist"
             )
-        user = self.repo.get_user_by_email(data.email)
+        user = self.user_repo.get_user_by_email(data.email)
 
         if user:
             raise HTTPException(
@@ -38,7 +45,7 @@ class UserService:
 
         data.password = hash_password(data.password)
 
-        return self.repo.create_user(data)
+        return self.user_repo.create_user(data)
 
     def update_user(self, id: int, data: UpdateUserData, user: User) -> User:
         if user.id != id and user.role == "worker":
@@ -48,13 +55,13 @@ class UserService:
             )
 
         if data.username:
-            if self.repo.get_user_by_username(data.username):
+            if self.user_repo.get_user_by_username(data.username):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="username already exist",
                 )
         if data.email:
-            if self.repo.get_user_by_email(data.email):
+            if self.user_repo.get_user_by_email(data.email):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="email already exist",
@@ -62,7 +69,7 @@ class UserService:
         if data.password:
             data.password = hash_password(data.password)
 
-        return self.repo.update_user(id, data)
+        return self.user_repo.update_user(id, data)
     
     def reset_password(self, id: int, data: ChangePasswordRequest):
         user = self.get_user_by_id(id)
@@ -77,20 +84,20 @@ class UserService:
 
         new_hash = hash_password(data.new_password)
 
-        self.repo.update_password(user, new_hash)
+        self.user_repo.update_password(user, new_hash)
 
     def activate_user(self, id: int):
         user = self.get_user_by_id(id)
 
-        return self.repo.activate_user(user)
+        return self.user_repo.activate_user(user)
 
     def deactivate_user(self, id: int):
         user = self.get_user_by_id(id)
 
-        return self.repo.deactivate_user(user)
+        return self.user_repo.deactivate_user(user)
 
     def authenticate_user(self, credentials: HTTPBasicCredentials):
-        user = self.repo.get_user_by_username(credentials.username)
+        user = self.user_repo.get_user_by_username(credentials.username)
 
         if not user or not verify_password(credentials.password, user.password_hash):
             raise HTTPException(
@@ -105,7 +112,7 @@ class UserService:
             {"sub": str(user.id), "jti": refresh_jti}
         )
 
-        self.repo.create_refresh_token(
+        self.user_repo.create_refresh_token(
             user=user, refresh_token=refresh_token_str, jti=refresh_jti
         )
 
@@ -116,13 +123,11 @@ class UserService:
     def refresh_access_token(self, refresh_token: str) -> UserLoginResponse:
         payload = verify_refresh_token(refresh_token)
 
-        print(payload)
-
         user_id = int(payload["sub"])
         jti = payload["jti"]
 
-        user = self.repo.get_user_by_id(user_id)
-        db_token = self.repo.get_refresh_token_by_jti(jti)
+        user = self.user_repo.get_user_by_id(user_id)
+        db_token = self.user_repo.get_refresh_token_by_jti(jti)
 
         if not user or not db_token or db_token.is_revoked:
             raise HTTPException(401, "Invalid token")
@@ -136,14 +141,14 @@ class UserService:
 
         jti = payload.get("jti")
 
-        db_token = self.repo.get_refresh_token_by_jti(jti)
+        db_token = self.user_repo.get_refresh_token_by_jti(jti)
 
         if not db_token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-        self.repo.revoke_refresh_token(db_token)
+        self.repo.user_revoke_refresh_token(db_token)
 
     def change_password_current_user(
         self, user: User, old_password: str, new_password: str
@@ -158,12 +163,34 @@ class UserService:
 
         new_hash = hash_password(new_password)
 
-        self.repo.update_password(user, new_hash)
+        self.user_repo.update_password(user, new_hash)
 
     def get_user_by_id(self, id: int) -> User:
-        user = self.repo.get_user_by_id(id)
+        user = self.user_repo.get_user_by_id(id)
 
         if not user:
             raise HTTPException(status_code=404, detail="user not found")
 
         return user
+    
+    def get_user_projects(self, id: int):
+        user = self.get_user_by_id(id)
+
+        if user.role == UserRole.ADMIN:
+            return self.project_repo.get_all_projects()
+
+        elif user.role == UserRole.MANAGER:
+            return self.project_repo.get_projects_by_manager(user.id)
+
+        elif user.role == UserRole.WORKER:
+            return self.project_repo.get_projects_by_user(user.id)
+        
+    def get_user_tasks(self, id: int):
+        user = self.get_user_by_id(id)
+
+        return self.task_repo.get_tasks_by_user(user.id)
+    
+    def get_user_reports(self, id: int):
+        user = self.get_user_by_id(id)
+
+        return self.report_repo.get_report_by_user(user.id)

@@ -25,15 +25,3 @@ class ProjectCreateRequest(BaseModel):
     description: str | None = None
     deadline: date
     manager_id: int
-
-
-class ProjectResponse(BaseModel):
-    id: int
-    name: str
-    description: str | None
-    deadline: date
-    manager_id: int
-    status: ProjectStatus
-
-    class Config:
-        from_attributes = True

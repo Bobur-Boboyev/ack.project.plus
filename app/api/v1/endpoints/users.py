@@ -11,7 +11,10 @@ from app.schemas.user import (
     UserResponse,
     UpdateUserData,
 )
+from app.schemas.project import ProjectResponse
 from app.schemas.auth import ChangePasswordRequest
+from app.schemas.task import TaskResponse
+from app.schemas.report import ReportResponse
 from app.core.deps import get_admin, get_manager, get_db, get_admin_or_manager, get_user
 from app.services.user_service import UserService
 from app.repository.user_repo import UserRepo
@@ -100,3 +103,30 @@ def reset_password_view(
     service.reset_password(id, data)
 
     return {"message": "succesfully changed"}
+
+
+@router.get("/{id}/projects", response_model=list[ProjectResponse])
+def get_user_projects(id: Annotated[int, Path()], admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
+    db: Annotated[Session, Depends(get_db)]):
+    service = UserService(db)
+    projects = service.get_user_projects(id)
+
+    return projects
+
+
+@router.get("/{id}/tasks", response_model=list[TaskResponse])
+def get_user_projects(id: Annotated[int, Path()], admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
+    db: Annotated[Session, Depends(get_db)]):
+    service = UserService(db)
+    tasks = service.get_user_tasks(id)
+
+    return tasks
+
+
+@router.get("/{id}/reports", response_model=list[ReportResponse])
+def get_user_projects(id: Annotated[int, Path()], admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
+    db: Annotated[Session, Depends(get_db)]):
+    service = UserService(db)
+    tasks = service.get_user_reports(id)
+
+    return tasks

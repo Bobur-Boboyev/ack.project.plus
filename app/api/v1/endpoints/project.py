@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_admin, get_db, get_user
@@ -12,7 +12,7 @@ from app.models.user import User
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
-@router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 def create_project(
     data: ProjectCreateRequest,
     db: Annotated[Session, Depends(get_db)],
@@ -32,7 +32,7 @@ def create_project(
     return project
 
 
-@router.get("", response_model=List[ProjectResponse], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=List[ProjectResponse], status_code=status.HTTP_200_OK)
 def get_projects(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[Session, Depends(get_user)],
@@ -45,8 +45,8 @@ def get_projects(
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-def get_project(
-    project_id: int,
+def get_project_by_id(
+    project_id: Annotated[int, Path()],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[Session, Depends(get_user)],
 ):

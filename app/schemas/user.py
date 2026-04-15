@@ -85,3 +85,14 @@ class UserResponseDetail(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserResponse(BaseModel):
+    id: int = Field(gt=0)
+    username: str
+    email: EmailStr | None
+    role: UserRole
+    is_active: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

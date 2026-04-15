@@ -22,6 +22,9 @@ class UserRepo:
         self.db.refresh(user)
 
         return user
+    
+    def get_all_users(self) -> list[User]|None:
+        return self.db.query(User).all()
 
     def get_user_by_username(self, username: str):
         return self.db.query(User).filter(User.username == username).first()

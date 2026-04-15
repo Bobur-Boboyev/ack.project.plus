@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from fastapi.security import HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
@@ -8,8 +8,10 @@ from app.repository.user_repo import UserRepo
 from app.repository.project_repo import ProjectRepo
 from app.repository.task_repo import TaskRepo
 from app.repository.report_repo import ReportRepo
+from app.repository.file_repo import FileRepo
 from app.schemas.auth import UserLoginResponse, ChangePasswordRequest
 from app.schemas.user import CreateUser, UpdateUserData
+from app.schemas.user_profile import UpdateProfile
 from app.core.security import (
     generate_token,
     generate_refresh_token,
@@ -20,6 +22,8 @@ from app.core.security import (
 from app.models import User
 from app.models.user import UserRole
 
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic"}
+MAX_SIZE = 2 * 1024 * 1024  # 2MB
 
 class UserService:
     def __init__(self, db: Session):
@@ -28,6 +32,7 @@ class UserService:
         self.project_repo = ProjectRepo(db)
         self.task_repo = TaskRepo(db)
         self.report_repo = ReportRepo(db)
+        self.file_repo = FileRepo(db)
 
     def create_user(self, data: CreateUser) -> User:
         user = self.user_repo.get_user_by_username(data.username)
@@ -71,6 +76,23 @@ class UserService:
 
         return self.user_repo.update_user(id, data)
     
+    def update_avatar(self, user: User, file: UploadFile):
+        if file.content_type not in ALLOWED_TYPES:
+            raise HTTPException(400, "Invalid file type")
+        
+        content = file.file.read()
+        if len(content) > MAX_SIZE:
+            raise HTTPException(400, "File too large")
+        
+        file.file.seek(0)
+
+        file_obj = self.file_repo.save_file(file, user)
+
+        data = UpdateProfile(avatar_file_id=file_obj.id)
+
+        return self.user_repo.update_profile(data=data, user=user)
+        
+
     def reset_password(self, id: int, data: ChangePasswordRequest):
         user = self.get_user_by_id(id)
 

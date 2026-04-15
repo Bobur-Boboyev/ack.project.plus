@@ -8,7 +8,8 @@ from app.schemas.project import (
     ProjectCreateRequest, 
     ProjectResponse, 
     UpdateProjectStatusRequest, 
-    AddProjectMemberRequest
+    # AddProjectMemberRequest,
+    AssignManagerRequest
 )
 from app.services.project_service import ProjectService
 from app.models.user import User
@@ -74,6 +75,24 @@ def update_project_status(
     project = service.update_project_status(
         project_id=project_id,
         new_status=data.status,
+        current_user=current_user
+    )
+
+    return project
+
+
+@router.patch("/{project_id}/assign-manager")
+def assign_manager(
+    project_id: int,
+    data: AssignManagerRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    project = service.assign_manager(
+        project_id=project_id,
+        manager_id=data.manager_id,
         current_user=current_user
     )
 

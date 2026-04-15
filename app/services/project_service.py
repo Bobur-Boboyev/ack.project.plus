@@ -151,3 +151,25 @@ class ProjectService:
         project.status = new_status
 
         return self.repo.update_project(project)
+    
+    def assign_manager(self, project_id: int, manager_id: int, current_user):
+
+        project = self.repo.get_project_by_id(project_id)
+
+        if not project:
+            raise HTTPException(404, "Project not found")
+
+        if current_user.role != UserRole.ADMIN:
+            raise HTTPException(403, "Only admin can assign manager")
+
+        manager = self.repo.get_user_by_id(manager_id)
+
+        if not manager:
+            raise HTTPException(404, "User not found")
+
+        if manager.role != UserRole.MANAGER:
+            raise HTTPException(400, "User is not manager")
+
+        project.manager_id = manager_id
+
+        return self.repo.update_project(project)

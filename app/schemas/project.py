@@ -45,3 +45,7 @@ class AddProjectMemberRequest(BaseModel):
 
 class UpdateProjectStatusRequest(BaseModel):
     status: ProjectStatus
+
+
+class AssignManagerRequest(BaseModel):
+    manager_id: int

@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.models.user import User
-from app.models.refresh_token import RefreshToken
+from app.models import User, UserProfile, RefreshToken
 from app.schemas.user import CreateUser, UpdateUserData
+from app.schemas.user_profile import UpdateProfile
 
 
 class UserRepo:
@@ -38,7 +38,28 @@ class UserRepo:
         self.db.commit()
 
         return user
+    
+    def update_profile(self, data: UpdateProfile, user: User):
+        profile = (
+        self.db.query(UserProfile)
+        .filter(UserProfile.user_id == user.id)
+        .first()
+        )
 
+        if not profile:
+            profile = UserProfile(user_id=user.id)
+            self.db.add(profile)
+
+        update_data = data.model_dump(exclude_unset=True)
+
+        for field, value in update_data.items():
+            setattr(profile, field, value)
+
+        self.db.commit()
+        self.db.refresh(profile)
+
+        return profile
+        
     def activate_user(self, user: User):
         user.is_active = True
 

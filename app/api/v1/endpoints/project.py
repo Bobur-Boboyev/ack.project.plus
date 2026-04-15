@@ -7,9 +7,11 @@ from app.core.deps import get_admin, get_db, get_user
 from app.schemas.project import (
     ProjectCreateRequest, 
     ProjectResponse, 
-    UpdateProjectStatusRequest, 
-    # AddProjectMemberRequest,
-    AssignManagerRequest
+    UpdateProjectStatusRequest,
+    AssignManagerRequest,
+    ProjectMemberResponse,
+    AddProjectMemberRequest,
+    ProjectProgressResponse
 )
 from app.services.project_service import ProjectService
 from app.models.user import User
@@ -51,7 +53,7 @@ def get_projects(
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-def get_project_by_id(
+def get_project(
     project_id: Annotated[int, Path()],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[Session, Depends(get_user)],
@@ -65,7 +67,7 @@ def get_project_by_id(
 
 @router.patch("/{project_id}/status")
 def update_project_status(
-    project_id: int,
+    project_id: Annotated[int, Path()],
     data: UpdateProjectStatusRequest,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[Session, Depends(get_user)],
@@ -83,7 +85,7 @@ def update_project_status(
 
 @router.patch("/{project_id}/assign-manager")
 def assign_manager(
-    project_id: int,
+    project_id: Annotated[int, Path()],
     data: AssignManagerRequest,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_user)],
@@ -99,19 +101,77 @@ def assign_manager(
     return project
 
 
-# @router.post("/{project_id}/members", status_code=201)
-# def add_member(
-#     project_id: int,
-#     data: AddProjectMemberRequest,
-#     db: Annotated[Session, Depends(get_db)],
-#     current_user:  Annotated[Session, Depends(get_user)],
-# ):
-#     service = ProjectService(db)
+@router.post("/{project_id}/accept")
+def accept_project(
+    project_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_user)],
+):
+    service = ProjectService(db)
 
-#     service.add_member(
-#         project_id=project_id,
-#         user_id=data.user_id,
-#         current_user=current_user
-#     )
+    project = service.accept_project(
+        project_id=project_id,
+        current_user=current_user
+    )
 
-#     return {"message": "Member added"}
+    return project
+
+
+@router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
+def get_members(
+    project_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    members = service.get_project_members(project_id, current_user)
+
+    return members
+
+
+@router.post("/{project_id}/members", status_code=201)
+def add_member(
+    project_id: Annotated[int, Path()],
+    data: AddProjectMemberRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user:  Annotated[Session, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    service.add_member(
+        project_id=project_id,
+        user_id=data.user_id,
+        current_user=current_user
+    )
+
+    return {"message": "Member added"}
+
+
+@router.delete("/{project_id}/members/{user_id}", status_code=204)
+def delete_member(
+    project_id: Annotated[int, Path()],
+    user_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[Session, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    service.delete_member(
+        project_id=project_id,
+        user_id=user_id,
+        current_user=current_user
+    )
+
+    return None
+
+
+@router.get("/{project_id}/progress", response_model=ProjectProgressResponse)
+def get_progress(
+    project_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[Session, Depends(get_user)],
+):
+    service = ProjectService(db)
+
+    return service.get_project_progress(project_id, current_user)

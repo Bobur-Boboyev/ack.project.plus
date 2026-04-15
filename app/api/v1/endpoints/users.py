@@ -1,12 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, status, Depends, Body
+from fastapi import APIRouter, status, Depends, Body, Path
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.models import User
 from app.schemas.user import UserResponseDetail, CreateUser, UserResponse
-from app.core.deps import get_admin, get_manager, get_db
+from app.core.deps import get_admin, get_manager, get_db, get_admin_or_manager
 from app.services.user_service import UserService
 from app.repository.user_repo import UserRepo
 
@@ -25,8 +25,22 @@ async def create_user_view(
 
 
 @router.get("/", response_model=list[UserResponse])
-async def get_users_view(admin: Annotated[User, Depends(get_admin)], db: Annotated[Session, Depends(get_db)]):
+async def get_users_view(
+    admin: Annotated[User, Depends(get_admin)], db: Annotated[Session, Depends(get_db)]
+):
     repository = UserRepo(db)
     users = repository.get_all_users()
 
     return users
+
+
+@router.get("/{id}", response_model=UserResponseDetail)
+async def get_user_view(
+    id: Annotated[int, Path()],
+    admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    repository = UserRepo(db)
+    user = repository.get_user_by_id(id)
+
+    return user

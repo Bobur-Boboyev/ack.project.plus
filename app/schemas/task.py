@@ -62,3 +62,16 @@ class TaskDetailResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateTaskStatus(BaseModel):
+    status: TaskStatus
+
+
+class AssignWorkerRequest(BaseModel):
+    user_id: int
+    role_on_task: Optional[str] = None
+
+
+class UnassignWorkerRequest(BaseModel):
+    user_id: int

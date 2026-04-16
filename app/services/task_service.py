@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models import User, UserRole
-from app.schemas.task import CreateTask, UpdateTask
+from app.schemas.task import CreateTask, UpdateTask, AssignWorkerRequest
 from app.repository.task_repo import TaskRepo
 from app.repository.project_repo import ProjectRepo
 
@@ -56,6 +56,132 @@ class TaskService:
                 )
 
         return self.task_repo.update(task, update_data)
+    
+    def update_task_status(self, task_id: int, data, user):
+        task = self.task_repo.get_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+
+        if not self.task_repo.get_assignment(task_id, user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not assigned to this task",
+            )
+
+        if task.status.is_final():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Task already completed or canceled",
+            )
+
+        new_status = data.status
+
+        if not task.status.can_transition(new_status):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status transition: {task.status} → {new_status}",
+            )
+
+        old_status = task.status
+
+        task.status = new_status
+
+        self.task_repo.add_status_history(
+            task_id=task.id,
+            old_status=old_status,
+            new_status=new_status,
+            changed_by=user.id
+        )
+
+        return self.task_repo.update(task, {"status": new_status})
+        
+    def assign_worker(self, task_id: int, data: AssignWorkerRequest, manager: User):
+        task = self.task_repo.get_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+
+        if task.project.manager_id != manager.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not allowed",
+            )
+
+        if self.task_repo.get_assignment(task_id, data.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already assigned",
+            )
+
+        if task.status.is_final():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot assign worker to final task",
+            )
+
+        self.task_repo.assign_user(
+            task_id=task_id,
+            user_id=data.user_id,
+            role_on_task=data.role_on_task,
+            assigned_by=manager.id,
+        )
+
+        return task
+    
+    def unassign_worker(self, task_id: int, user_id: int, manager):
+        task = self.task_repo.get_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+        
+        if task.project.manager_id != manager.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not allowed",
+            )
+        
+        if task.status.is_final():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot modify final task",
+            )
+        
+        if not self.task_repo.get_assignment(task_id, user_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is not assigned to this task",
+            )
+        
+        self.task_repo.unassign_user(task_id, user_id)
+
+        return task
+    
+    def get_task_assignments(self, task_id: int, user):
+        task = self.task_repo.get_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+        
+        if task.project.manager_id != user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not allowed",
+                )
+
+        return self.task_repo.get_assignments(task_id)
 
     def get_tasks(self, user: User):
         if user.role == "admin":

@@ -99,3 +99,11 @@ class TaskRepo:
         self.db.add(history)
         self.db.commit()
         self.db.refresh(history)
+    
+    def get_status_history(self, task_id: int):
+        return (
+            self.db.query(TaskStatusHistory)
+            .filter(TaskStatusHistory.task_id == task_id)
+            .order_by(TaskStatusHistory.created_at.asc())
+            .all()
+        )

@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import APIRouter, Depends, status, Path, Body
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_admin, get_db, get_user, get_manager, get_admin_or_manager
+from app.core.deps import get_admin, get_db, get_user, get_manager, get_admin_or_manager, get_worker
 from app.models import User
 from app.schemas.task import (
     CreateTask,
@@ -14,6 +14,7 @@ from app.schemas.task import (
     AssignWorkerRequest,
     UnassignWorkerRequest,
     TaskAssignmentResponse,
+    TaskStatusHistoryResponse
 )
 from app.services.task_service import TaskService
 
@@ -124,3 +125,31 @@ def get_assignments(
         task_id=id,
         user=manager,
     )
+
+
+@router.get("tasks/{id}/history", response_model=list[TaskStatusHistoryResponse])
+def get_task_history(
+    id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_user)]
+):
+    service = TaskService(db)
+    return service.get_task_history(task_id=id, user=user)
+
+
+@router.get("my/tasks", response_model=list[TaskResponse])
+def get_my_tasks(
+    db: Annotated[Session, Depends(get_db)],
+    worker: Annotated[User, Depends(get_worker)]
+):
+    service = TaskService(db)
+    return service.get_tasks(user=worker)
+
+
+@router.get("manager/tasks", response_model=list[TaskResponse])
+def get_my_tasks(
+    db: Annotated[Session, Depends(get_db)],
+    manager: Annotated[User, Depends(get_manager)]
+):
+    service = TaskService(db)
+    return service.get_tasks(user=manager)

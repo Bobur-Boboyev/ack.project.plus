@@ -75,3 +75,14 @@ class AssignWorkerRequest(BaseModel):
 
 class UnassignWorkerRequest(BaseModel):
     user_id: int
+
+
+class TaskStatusHistoryResponse(BaseModel):
+    id: int
+    task_id: int
+    old_status: TaskStatus
+    new_status: TaskStatus
+    changed_by: int | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

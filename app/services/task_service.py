@@ -225,7 +225,7 @@ class TaskService:
                 )
 
             return task
-        
+
     def get_task_history(self, task_id: int, user: User):
         task = self.task_repo.get_by_id(task_id)
 
@@ -237,7 +237,7 @@ class TaskService:
 
         if user.role == "admin":
             return self.task_repo.get_status_history(task_id)
-        
+
         if user.role == "manager":
             if task.project.manager_id != user.id:
                 raise HTTPException(
@@ -245,11 +245,10 @@ class TaskService:
                     detail="Not allowed",
                 )
             return self.task_repo.get_status_history(task_id)
-        
+
         if user.role == "worker":
             if not self.task_repo.get_assignment(task_id, user.id):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not allowed"
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed"
                 )
             return self.task_repo.get_status_history(task_id)

@@ -28,7 +28,7 @@ class TaskService:
             deadline=data.deadline,
         )
         return task
-    
+
     def update_task(self, task_id: int, data: UpdateTask, manager):
         task = self.task_repo.get_by_id(task_id)
 
@@ -56,7 +56,7 @@ class TaskService:
                 )
 
         return self.task_repo.update(task, update_data)
-    
+
     def update_task_status(self, task_id: int, data, user):
         task = self.task_repo.get_by_id(task_id)
 
@@ -94,11 +94,11 @@ class TaskService:
             task_id=task.id,
             old_status=old_status,
             new_status=new_status,
-            changed_by=user.id
+            changed_by=user.id,
         )
 
         return self.task_repo.update(task, {"status": new_status})
-        
+
     def assign_worker(self, task_id: int, data: AssignWorkerRequest, manager: User):
         task = self.task_repo.get_by_id(task_id)
 
@@ -134,7 +134,7 @@ class TaskService:
         )
 
         return task
-    
+
     def unassign_worker(self, task_id: int, user_id: int, manager):
         task = self.task_repo.get_by_id(task_id)
 
@@ -143,29 +143,29 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
-        
+
         if task.project.manager_id != manager.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not allowed",
             )
-        
+
         if task.status.is_final():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot modify final task",
             )
-        
+
         if not self.task_repo.get_assignment(task_id, user_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User is not assigned to this task",
             )
-        
+
         self.task_repo.unassign_user(task_id, user_id)
 
         return task
-    
+
     def get_task_assignments(self, task_id: int, user):
         task = self.task_repo.get_by_id(task_id)
 
@@ -174,12 +174,12 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
-        
+
         if task.project.manager_id != user.id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not allowed",
-                )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not allowed",
+            )
 
         return self.task_repo.get_assignments(task_id)
 

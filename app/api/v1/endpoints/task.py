@@ -5,7 +5,16 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_admin, get_db, get_user, get_manager, get_admin_or_manager
 from app.models import User
-from app.schemas.task import CreateTask, TaskResponse, TaskDetailResponse, UpdateTask, UpdateTaskStatus, AssignWorkerRequest, UnassignWorkerRequest, TaskAssignmentResponse
+from app.schemas.task import (
+    CreateTask,
+    TaskResponse,
+    TaskDetailResponse,
+    UpdateTask,
+    UpdateTaskStatus,
+    AssignWorkerRequest,
+    UnassignWorkerRequest,
+    TaskAssignmentResponse,
+)
 from app.services.task_service import TaskService
 
 
@@ -55,11 +64,11 @@ def update_task_view(
     id: Annotated[int, Path()],
     data: Annotated[UpdateTask, Body()],
     db: Annotated[Session, Depends(get_db)],
-    manager: Annotated[User, Depends(get_manager)]
+    manager: Annotated[User, Depends(get_manager)],
 ):
     service = TaskService(db)
     updated_task = service.update_task(id, data, manager)
-    
+
     return updated_task
 
 
@@ -93,34 +102,25 @@ def assign_worker_view(
     )
 
 
-@router.delete(
-    "/tasks/{id}/unassign",
-    response_model=TaskDetailResponse
-)
+@router.delete("/tasks/{id}/unassign", response_model=TaskDetailResponse)
 def unassign_worker_view(
     id: Annotated[int, Path()],
     data: Annotated[UnassignWorkerRequest, Body()],
     db: Annotated[Session, Depends(get_db)],
-    manager: Annotated[User, Depends(get_manager)]
+    manager: Annotated[User, Depends(get_manager)],
 ):
     service = TaskService(db)
-    return service.unassign_worker(
-        task_id=id,
-        user_id=data.user_id,
-        manager=manager
-    )
+    return service.unassign_worker(task_id=id, user_id=data.user_id, manager=manager)
 
 
 @router.get("/tasks/{id}/assignments", response_model=list[TaskAssignmentResponse])
 def get_assignments(
     id: Annotated[int, Path()],
     db: Annotated[Session, Depends(get_db)],
-    manager: Annotated[User, Depends(get_manager)]
+    manager: Annotated[User, Depends(get_manager)],
 ):
     service = TaskService(db)
     return service.get_task_assignments(
         task_id=id,
         user=manager,
     )
-
-

@@ -16,7 +16,7 @@ class TaskRepo:
         self.db.refresh(task)
 
         return task
-    
+
     def update(self, task: Task, data: dict):
         for key, value in data.items():
             setattr(task, key, value)
@@ -56,15 +56,17 @@ class TaskRepo:
             )
             .first()
         )
-    
+
     def get_assignments(self, task_id: int):
         return (
             self.db.query(TaskAssignment)
             .filter(TaskAssignment.task_id == task_id)
             .all()
         )
-    
-    def assign_user(self, task_id: int, user_id: int, role_on_task: str,  assigned_by: int):
+
+    def assign_user(
+        self, task_id: int, user_id: int, role_on_task: str, assigned_by: int
+    ):
         assignment = TaskAssignment(
             task_id=task_id,
             user_id=user_id,
@@ -77,7 +79,7 @@ class TaskRepo:
         self.db.refresh(assignment)
 
         return assignment
-    
+
     def unassign_user(self, task_id: int, user_id: int):
         self.db.query(TaskAssignment).filter(
             TaskAssignment.task_id == task_id,

@@ -3,7 +3,7 @@ from app.models.user import User, UserRole
 from app.models.attachment import ReportAttachment
 from app.models.auditlog import AuditLog
 from app.models.daily_report import DailyReport
-from app.models.file import File
+from app.models.file import File, FileType
 from app.models.help_request import HelpRequest
 from app.models.notification import Notification
 from app.models.project_members import ProjectMember

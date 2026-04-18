@@ -19,7 +19,7 @@ class AuditLogRepo:
 
         self.db.add(audit)
         self.db.commit()
-        self.db.refresh(audit)
+
 
     def get_all(self):
         return self.db.query(AuditLog).order_by(AuditLog.created_at.desc()).all()

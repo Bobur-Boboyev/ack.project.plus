@@ -5,6 +5,8 @@ from app.models import User, UserRole
 from app.schemas.task import CreateTask, UpdateTask, AssignWorkerRequest
 from app.repository.task_repo import TaskRepo
 from app.repository.project_repo import ProjectRepo
+from app.repository.auditlog_repo import AuditLogRepo
+from app.models.auditlog import AuditAction
 
 
 class TaskService:
@@ -12,6 +14,7 @@ class TaskService:
         self.db = db
         self.task_repo = TaskRepo(db)
         self.project_repo = ProjectRepo(db)
+        self.log_repo = AuditLogRepo(db)
 
     def create_task(self, data: CreateTask, project_id: int):
         project = self.project_repo.get_project_by_id(project_id)
@@ -27,6 +30,9 @@ class TaskService:
             description=data.description,
             deadline=data.deadline,
         )
+        
+        self.log_repo.create_log(None, AuditAction.CREATE, "task", task.id)
+
         return task
 
     def update_task(self, task_id: int, data: UpdateTask, manager):

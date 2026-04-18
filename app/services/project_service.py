@@ -2,9 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repository.project_repo import ProjectRepo
+from app.repository.auditlog_repo import AuditLogRepo
 from app.models.project import Project
 from app.models.user import User, UserRole
 from app.models.project import ProjectStatus
+from app.models.auditlog import AuditAction
+
 
 
 ALLOWED_TRANSITIONS = {
@@ -20,6 +23,7 @@ ALLOWED_TRANSITIONS = {
 class ProjectService:
     def __init__(self, db: Session):
         self.repo = ProjectRepo(db)
+        self.log_repo = AuditLogRepo(db)
 
     def create_project(
         self,
@@ -27,7 +31,6 @@ class ProjectService:
         description: str | None,
         deadline,
         manager_id: int,
-        created_by: int,
         current_user_role: str,
     ):
         if current_user_role != UserRole.ADMIN:
@@ -57,7 +60,11 @@ class ProjectService:
             status=ProjectStatus.ASSIGNED,
         )
 
-        return self.repo.create_project(project)
+        project = self.repo.create_project(project)
+
+        self.log_repo.create_log(manager_id, AuditAction.CREATE, "project", project.id)
+
+        return project
 
     def get_projects(self, user: User):
 
@@ -176,7 +183,11 @@ class ProjectService:
 
         project.status = new_status
 
-        return self.repo.update_project(project)
+        project = self.repo.update_project(project)
+
+        self.log_repo.create_log(current_user.id, AuditAction.UPDATE, "project", project.id)
+
+        return project
 
     def assign_manager(self, project_id: int, manager_id: int, current_user):
 
@@ -198,7 +209,11 @@ class ProjectService:
 
         project.manager_id = manager_id
 
-        return self.repo.update_project(project)
+        project = self.repo.update_project(project)
+
+        self.log_repo.create_log(current_user.id, AuditAction.ASSIGN, "project", project.id)
+
+        return project
 
     def accept_project(self, project_id: int, current_user):
 

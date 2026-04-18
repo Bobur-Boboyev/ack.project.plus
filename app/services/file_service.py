@@ -17,31 +17,37 @@ class FileService:
         self.db = db
         self.file_repo = FileRepo(db)
 
-    def upload_files(self,
+    def upload_files(
+        self,
         files: list[UploadFile],
         user: User,
-        report_id: int,):
+        report_id: int,
+    ):
         if user.role not in ("admin", "manager", "worker"):
             raise HTTPException(status_code=403, detail="Not allowed")
-        
+
         results = []
 
         for file in files:
             db_file = self.file_repo.save_file(file, user)
 
-            attachment = self.file_repo.make_attachment(report_id=report_id, file_id=db_file.id)
+            attachment = self.file_repo.make_attachment(
+                report_id=report_id, file_id=db_file.id
+            )
 
-            results.append({
-                "file_id": db_file.id,
-                "attachment_id": attachment.id,
-                "original_name": db_file.original_name,
-                "stored_name": db_file.stored_name,
-                "file_type": db_file.file_type,
-                "size": db_file.size,
-            })
+            results.append(
+                {
+                    "file_id": db_file.id,
+                    "attachment_id": attachment.id,
+                    "original_name": db_file.original_name,
+                    "stored_name": db_file.stored_name,
+                    "file_type": db_file.file_type,
+                    "size": db_file.size,
+                }
+            )
 
         return results
-    
+
     def get_file(self, file_id: int, user: User) -> File:
         if user.role not in ("admin", "manager", "worker"):
             raise HTTPException(status_code=403, detail="Not allowed")
@@ -50,31 +56,28 @@ class FileService:
 
         if not file:
             raise HTTPException(status_code=404, detail="File not found")
-        
+
         if not file.path or not os.path.exists(file.path):
             raise HTTPException(status_code=404, detail="File missing on disk")
 
         return file
-    
+
     def delete_file(self, file_id, user):
         file = self.file_repo.get_file_by_id(file_id)
 
         if not file:
             raise HTTPException(status_code=404, detail="File not found")
-        
+
         if file.uploaded_by != user.id:
-                raise HTTPException(status_code=403, detail="Not allowed")
-        
+            raise HTTPException(status_code=403, detail="Not allowed")
+
         if file.path and os.path.exists(file.path):
             os.remove(file.path)
-        
+
         self.file_repo.delete_file(file)
-        
-        return {
-            "message": "deleted",
-            "file_id": file_id
-        }
-    
+
+        return {"message": "deleted", "file_id": file_id}
+
     def generate_signed_url(self, file_id: int, user: User):
         file = self.file_repo.get_file_by_id(file_id)
 
@@ -90,9 +93,7 @@ class FileService:
         payload = f"{file_id}:{expires_at}"
 
         signature = hmac.new(
-            settings.SECRET_KEY.encode(),
-            payload.encode(),
-            hashlib.sha256
+            settings.SECRET_KEY.encode(), payload.encode(), hashlib.sha256
         ).hexdigest()
 
         url = f"/files/{file_id}/download-signed?exp={expires_at}&sig={signature}"

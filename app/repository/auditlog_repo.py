@@ -7,23 +7,22 @@ class AuditLogRepo:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_log(self, user_id: int, action: AuditAction, entity_type: str, entity_id: int):
-        audit = AuditLog(actor_user_id=user_id, action=action, entity_type=entity_type, entity_id=entity_id)
+    def create_log(
+        self, user_id: int, action: AuditAction, entity_type: str, entity_id: int
+    ):
+        audit = AuditLog(
+            actor_user_id=user_id,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
 
         self.db.add(audit)
         self.db.commit()
         self.db.refresh(audit)
 
     def get_all(self):
-        return (
-            self.db.query(AuditLog)
-            .order_by(AuditLog.created_at.desc())
-            .all()
-        )
+        return self.db.query(AuditLog).order_by(AuditLog.created_at.desc()).all()
 
     def get_by_id(self, log_id: int):
-        return (
-            self.db.query(AuditLog)
-            .filter(AuditLog.id == log_id)
-            .first()
-        )
+        return self.db.query(AuditLog).filter(AuditLog.id == log_id).first()

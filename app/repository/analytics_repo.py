@@ -19,9 +19,7 @@ class AnalyticsRepo:
     def count_users(self):
         total = self.db.query(func.count(User.id)).scalar() or 0
         active = (
-            self.db.query(func.count(User.id))
-            .filter(User.is_active == True)
-            .scalar()
+            self.db.query(func.count(User.id)).filter(User.is_active == True).scalar()
             or 0
         )
         return total, active
@@ -104,7 +102,9 @@ class AnalyticsRepo:
         return (
             self.db.query(func.count(TaskAssignment.id))
             .join(Task, Task.id == TaskAssignment.task_id)
-            .filter(TaskAssignment.user_id == user_id, Task.status == TaskStatus.BLOCKED)
+            .filter(
+                TaskAssignment.user_id == user_id, Task.status == TaskStatus.BLOCKED
+            )
             .scalar()
             or 0
         )
@@ -167,9 +167,9 @@ class AnalyticsRepo:
                         else_=0,
                     )
                 ).label("active_tasks"),
-                func.sum(
-                    func.case((Task.status == TaskStatus.DONE, 1), else_=0)
-                ).label("completed_tasks"),
+                func.sum(func.case((Task.status == TaskStatus.DONE, 1), else_=0)).label(
+                    "completed_tasks"
+                ),
                 func.sum(
                     func.case((Task.status == TaskStatus.BLOCKED, 1), else_=0)
                 ).label("blocked_tasks"),
@@ -248,9 +248,7 @@ class AnalyticsRepo:
 
     def count_unique_reporters(self):
         return (
-            self.db.query(func.count(func.distinct(DailyReport.user_id)))
-            .scalar()
-            or 0
+            self.db.query(func.count(func.distinct(DailyReport.user_id))).scalar() or 0
         )
 
     def get_project_progress_rows(self, manager_id: int | None = None):
@@ -259,9 +257,9 @@ class AnalyticsRepo:
                 Project.id.label("project_id"),
                 Project.name.label("project_name"),
                 func.count(Task.id).label("total_tasks"),
-                func.sum(
-                    func.case((Task.status == TaskStatus.DONE, 1), else_=0)
-                ).label("completed_tasks"),
+                func.sum(func.case((Task.status == TaskStatus.DONE, 1), else_=0)).label(
+                    "completed_tasks"
+                ),
             )
             .join(Task, Task.project_id == Project.id)
             .group_by(Project.id, Project.name)

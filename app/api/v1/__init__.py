@@ -6,7 +6,7 @@ from app.api.v1.endpoints.profile import router as profile_router
 from app.api.v1.endpoints.project import router as project_router
 from app.api.v1.endpoints.task import router as task_router
 from app.api.v1.endpoints.reports import router as reports_router
-from app.api.v1.endpoints.files import router as files_router 
+from app.api.v1.endpoints.files import router as files_router
 from app.api.v1.endpoints.notification import router as notification_router
 from app.api.v1.endpoints.help_request import router as help_request_router
 from app.api.v1.endpoints.analytics import dashboard_router

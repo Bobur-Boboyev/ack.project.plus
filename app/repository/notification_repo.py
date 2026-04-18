@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-    
+
 from app.models.notification import Notification
 
 
@@ -22,7 +22,9 @@ class NotificationRepo:
             .first()
         )
 
-    def create_notification(self, notification: Notification):
+    def create_notification(self, user_id, title, message):
+        notification = Notification(user_id=user_id, title=title, message=message)
+
         self.db.add(notification)
         self.db.commit()
         self.db.refresh(notification)
@@ -37,8 +39,7 @@ class NotificationRepo:
 
     def mark_all_as_read(self, user_id: int):
         self.db.query(Notification).filter(
-            Notification.user_id == user_id,
-            Notification.is_read == False
+            Notification.user_id == user_id, Notification.is_read == False
         ).update({"is_read": True})
 
         self.db.commit()
@@ -46,9 +47,6 @@ class NotificationRepo:
     def get_unread_count(self, user_id: int):
         return (
             self.db.query(Notification)
-            .filter(
-                Notification.user_id == user_id,
-                Notification.is_read == False
-            )
+            .filter(Notification.user_id == user_id, Notification.is_read == False)
             .count()
         )

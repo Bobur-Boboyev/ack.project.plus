@@ -278,7 +278,7 @@ class ReportService:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied",
         )
-    
+
     def _attach_reports(self, submissions):
         result = []
 

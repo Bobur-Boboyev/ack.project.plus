@@ -129,7 +129,4 @@ def get_monthly_report_view(
 ):
     service = ReportService(db)
 
-    return service.get_monthly_report_by_id(
-        submission_id=id,
-        user=user
-    )
+    return service.get_monthly_report_by_id(submission_id=id, user=user)

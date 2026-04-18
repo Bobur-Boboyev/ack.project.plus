@@ -1,11 +1,18 @@
 from sqlalchemy.orm import Session
 
-from app.models.auditlog import AuditLog
+from app.models.auditlog import AuditLog, AuditAction
 
 
 class AuditLogRepo:
     def __init__(self, db: Session):
         self.db = db
+
+    def create_log(self, user_id: int, action: AuditAction, entity_type: str, entity_id: int):
+        audit = AuditLog(actor_user_id=user_id, action=action, entity_type=entity_type, entity_id=entity_id)
+
+        self.db.add(audit)
+        self.db.commit()
+        self.db.refresh(audit)
 
     def get_all(self):
         return (

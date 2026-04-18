@@ -36,7 +36,7 @@ class DailyReport(Base):
     text: Mapped[Optional[str]] = mapped_column(Text)
     report_date: Mapped[date] = mapped_column(
         Date,
-        server_default=date.today(),
+        default=date.today,
         index=True,
     )
     created_at: Mapped[datetime] = mapped_column(

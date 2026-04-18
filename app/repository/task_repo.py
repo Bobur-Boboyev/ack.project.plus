@@ -100,6 +100,8 @@ class TaskRepo:
         self.db.commit()
         self.db.refresh(history)
 
+        return history
+
     def get_status_history(self, task_id: int):
         return (
             self.db.query(TaskStatusHistory)

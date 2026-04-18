@@ -155,7 +155,16 @@ class ProjectService:
         if self.repo.is_member(project_id, user_id):
             raise HTTPException(400, "Already member")
 
-        return self.repo.add_member(project_id, user_id)
+        member = self.repo.add_member(project_id, user_id)
+
+        self.log_repo.create_log(
+            current_user.id,
+            AuditAction.ASSIGN,
+            "project_member",
+            project_id,
+        )
+
+        return member
 
     def update_project_status(self, project_id: int, new_status, current_user):
 
@@ -233,7 +242,16 @@ class ProjectService:
 
         project.status = ProjectStatus.ACTIVE
 
-        return self.repo.update_project(project)
+        project = self.repo.update_project(project)
+
+        self.log_repo.create_log(
+            current_user.id,
+            AuditAction.UPDATE,
+            "project",
+            project.id,
+        )
+
+        return project
 
     def delete_member(self, project_id: int, user_id: int, current_user):
 
@@ -259,6 +277,13 @@ class ProjectService:
 
         if not member:
             raise HTTPException(404, "Member not found")
+        
+        self.log_repo.create_log(
+            current_user.id,
+            AuditAction.UNASSIGN,
+            "project_member",
+            project_id,
+        )
 
         return True
 

@@ -61,7 +61,16 @@ class TaskService:
                     detail=f"Invalid status transition: {task.status} → {new_status}",
                 )
 
-        return self.task_repo.update(task, update_data)
+        task = self.task_repo.update(task, update_data)
+
+        self.log_repo.create_log(
+            manager.id,
+            AuditAction.UPDATE,
+            "task",
+            task.id,
+        )
+
+        return task
 
     def update_task_status(self, task_id: int, data, user):
         task = self.task_repo.get_by_id(task_id)
@@ -103,7 +112,16 @@ class TaskService:
             changed_by=user.id,
         )
 
-        return self.task_repo.update(task, {"status": new_status})
+        task = self.task_repo.update(task, {"status": new_status})
+
+        self.log_repo.create_log(
+            user.id,
+            AuditAction.UPDATE,
+            "task",
+            task.id,
+        )
+
+        return task
 
     def assign_worker(self, task_id: int, data: AssignWorkerRequest, manager: User):
         task = self.task_repo.get_by_id(task_id)
@@ -139,6 +157,13 @@ class TaskService:
             assigned_by=manager.id,
         )
 
+        self.log_repo.create_log(
+            manager.id,
+            AuditAction.ASSIGN,
+            "task",
+            task.id,
+        )
+
         return task
 
     def unassign_worker(self, task_id: int, user_id: int, manager):
@@ -169,6 +194,13 @@ class TaskService:
             )
 
         self.task_repo.unassign_user(task_id, user_id)
+
+        self.log_repo.create_log(
+            manager.id,
+            AuditAction.UNASSIGN,
+            "task",
+            task.id,
+        )
 
         return task
 

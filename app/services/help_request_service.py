@@ -47,10 +47,7 @@ class HelpRequestService:
             return self.repo.get_all()
 
         elif current_user.role == UserRole.WORKER:
-            return [
-                r for r in self.repo.get_all()
-                if r.requested_by == current_user.id
-            ]
+            return [r for r in self.repo.get_all() if r.requested_by == current_user.id]
 
         return []
 

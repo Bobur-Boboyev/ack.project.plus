@@ -20,8 +20,7 @@ class MonthlyReportSubmission(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "user_id", "project_id", "year", "month",
-            name="uq_user_project_month"
+            "user_id", "project_id", "year", "month", name="uq_user_project_month"
         ),
     )
 
@@ -36,19 +35,14 @@ class MonthlyReportSubmission(Base):
     month: Mapped[int]
     total_reports: Mapped[int] = mapped_column(default=0)
     status: Mapped[MonthlyReportStatus] = mapped_column(
-        Enum(MonthlyReportStatus),
-        default=MonthlyReportStatus.DRAFT,
-        nullable=False
+        Enum(MonthlyReportStatus), default=MonthlyReportStatus.DRAFT, nullable=False
     )
     submitted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now()
+        DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        onupdate=func.now()
+        DateTime(timezone=True), onupdate=func.now()
     )
 
     user: Mapped["User"] = relationship("User")
     project: Mapped["Project"] = relationship("Project")
-    

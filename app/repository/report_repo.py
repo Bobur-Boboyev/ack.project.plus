@@ -79,7 +79,7 @@ class ReportRepo:
             .order_by(DailyReport.report_date.asc())
             .all()
         )
-    
+
     def get_by_user_project_range(self, user_id: int, project_id: int, start, end):
         return (
             self.db.query(DailyReport)
@@ -134,10 +134,10 @@ class ReportRepo:
 
     def get_all_monthly_reports(self):
         return (
-        self.db.query(MonthlyReportSubmission)
-        .order_by(MonthlyReportSubmission.submitted_at.desc())
-        .all()
-    )
+            self.db.query(MonthlyReportSubmission)
+            .order_by(MonthlyReportSubmission.submitted_at.desc())
+            .all()
+        )
 
     def get_monthly_report_by_projects(self, project_ids):
         if not project_ids:
@@ -146,19 +146,23 @@ class ReportRepo:
         return (
             self.db.query(MonthlyReportSubmission)
             .filter(MonthlyReportSubmission.project_id.in_(project_ids))
-            .order_by(MonthlyReportSubmission.year.desc(),
-                    MonthlyReportSubmission.month.desc())
+            .order_by(
+                MonthlyReportSubmission.year.desc(),
+                MonthlyReportSubmission.month.desc(),
+            )
             .all()
         )
-    
+
     def get_monthly_reports_by_user(self, user_id):
         return (
-        self.db.query(MonthlyReportSubmission)
-        .filter(MonthlyReportSubmission.user_id == user_id)
-        .order_by(MonthlyReportSubmission.year.desc(),
-                  MonthlyReportSubmission.month.desc())
-        .all()
-    )
+            self.db.query(MonthlyReportSubmission)
+            .filter(MonthlyReportSubmission.user_id == user_id)
+            .order_by(
+                MonthlyReportSubmission.year.desc(),
+                MonthlyReportSubmission.month.desc(),
+            )
+            .all()
+        )
 
     def get_monthly_report_by_id(
         self, monthly_report_id: int

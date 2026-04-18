@@ -63,9 +63,7 @@ def download_file_view(
         path=file.path,
         filename=file.original_name,
         media_type=file.content_type,
-        headers={
-            "Content-Disposition": f'attachment; filename="{file.original_name}"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="{file.original_name}"'},
     )
 
 
@@ -77,4 +75,3 @@ def get_signed_url(
 ):
     service = FileService(db)
     return service.generate_signed_url(id, user)
-

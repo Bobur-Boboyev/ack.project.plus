@@ -16,7 +16,7 @@ class FileResponse(BaseModel):
     path: str
     filename: str
     media_type: str
-    headers: None|dict
+    headers: None | dict
 
 
 class SignedUrlResponse(BaseModel):

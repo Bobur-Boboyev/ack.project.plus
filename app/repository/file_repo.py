@@ -52,26 +52,25 @@ class FileRepo:
         if "zip" in content_type:
             return FileType.ARCHIVE
         return FileType.OTHER
-    
+
     def make_attachment(self, report_id: int, file_id: int):
         attachment = ReportAttachment(
-                report_id=report_id,
-                file_id=file_id,
-            )
-        
+            report_id=report_id,
+            file_id=file_id,
+        )
+
         self.db.add(attachment)
         self.db.commit()
         self.db.refresh(attachment)
 
         return attachment
-    
+
     def get_file_by_id(self, file_id):
         return self.db.query(File).filter(File.id == file_id).first()
-    
+
     def delete_file(self, file: File):
         if not file:
-            return 
-        
+            return
+
         self.db.delete(file)
         self.db.commit()
-        

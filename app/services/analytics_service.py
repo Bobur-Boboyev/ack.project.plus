@@ -40,8 +40,10 @@ class AnalyticsService:
             raise HTTPException(403, "Only manager can access manager dashboard")
 
         total_projects = len(self.repo.get_manager_projects(current_user.id))
-        active_projects = (
-            sum(1 for p in self.repo.get_manager_projects(current_user.id) if p.status == "active")
+        active_projects = sum(
+            1
+            for p in self.repo.get_manager_projects(current_user.id)
+            if p.status == "active"
         )
         total_workers = self.repo.count_manager_workers(current_user.id)
         total_tasks = self.repo.count_manager_tasks(current_user.id)
@@ -120,7 +122,9 @@ class AnalyticsService:
                     "entity_id": row.entity_id,
                     "title": row.title,
                     "deadline": row.deadline,
-                    "status": row.status.value if hasattr(row.status, "value") else str(row.status),
+                    "status": row.status.value
+                    if hasattr(row.status, "value")
+                    else str(row.status),
                     "is_overdue": row.deadline < now if row.deadline else False,
                 }
             )

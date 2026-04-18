@@ -14,12 +14,9 @@ class NotificationService:
         return self.repo.get_user_notifications(current_user.id)
 
     def create_notification(self, user_id: int, title: str, message: str):
-        notification = Notification(
-            user_id=user_id,
-            title=title,
-            message=message,
+        return self.repo.create_notification(
+            user_id=user_id, title=title, message=message
         )
-        return self.repo.create_notification(notification)
 
     def mark_as_read(self, notification_id: int, current_user: User):
         notification = self.repo.get_notification_by_id(notification_id)

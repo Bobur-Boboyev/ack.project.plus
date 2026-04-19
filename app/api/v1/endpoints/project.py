@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, status, Path
+from fastapi import APIRouter, Depends, status, Path, Body
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_admin, get_db, get_user
@@ -68,7 +68,7 @@ def get_project(
 @router.patch("/{project_id}", response_model=ProjectResponse)
 def update_project(
     project_id: Annotated[int, Path()],
-    data: UpdateProjectRequest,
+    data: Annotated[UpdateProjectRequest, Body()],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_user)],
 ):
@@ -86,7 +86,7 @@ def update_project(
 @router.patch("/{project_id}/status")
 def update_project_status(
     project_id: Annotated[int, Path()],
-    data: UpdateProjectStatusRequest,
+    data: Annotated[UpdateProjectStatusRequest, Body()],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[Session, Depends(get_user)],
 ):

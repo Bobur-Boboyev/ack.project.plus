@@ -12,7 +12,6 @@ from app.schemas.project import (
     ProjectMemberResponse,
     AddProjectMemberRequest,
     ProjectProgressResponse,
-    UpdateProjectRequest
 )
 from app.services.project_service import ProjectService
 from app.models.user import User
@@ -61,24 +60,6 @@ def get_project(
     service = ProjectService(db)
 
     project = service.get_project_detail(project_id, current_user)
-
-    return project
-
-
-@router.patch("/{project_id}", response_model=ProjectResponse)
-def update_project(
-    project_id: Annotated[int, Path()],
-    data: UpdateProjectRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_user)],
-):
-    service = ProjectService(db)
-
-    project = service.update_project(
-        project_id=project_id,
-        data=data,
-        current_user=current_user,
-    )
 
     return project
 

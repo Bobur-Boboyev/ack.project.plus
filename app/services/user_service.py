@@ -170,7 +170,7 @@ class UserService:
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-        self.repo.user_revoke_refresh_token(db_token)
+        self.user_repo.revoke_refresh_token(db_token)
 
     def change_password_current_user(
         self, user: User, old_password: str, new_password: str

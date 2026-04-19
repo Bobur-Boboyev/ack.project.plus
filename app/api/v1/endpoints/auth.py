@@ -39,7 +39,7 @@ def refresh_view(
 
 @router.post("/logout")
 def logout(
-    refresh_token: str,
+    refresh_token: Annotated[str, Body()],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_user)],
 ):

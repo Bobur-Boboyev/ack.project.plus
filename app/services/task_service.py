@@ -30,7 +30,7 @@ class TaskService:
             description=data.description,
             deadline=data.deadline,
         )
-        
+
         self.log_repo.create_log(None, AuditAction.CREATE, "task", task.id)
 
         return task

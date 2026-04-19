@@ -9,7 +9,6 @@ from app.models.project import ProjectStatus
 from app.models.auditlog import AuditAction
 
 
-
 ALLOWED_TRANSITIONS = {
     "draft": ["assigned"],
     "assigned": ["active", "on_hold"],
@@ -194,7 +193,9 @@ class ProjectService:
 
         project = self.repo.update_project(project)
 
-        self.log_repo.create_log(current_user.id, AuditAction.UPDATE, "project", project.id)
+        self.log_repo.create_log(
+            current_user.id, AuditAction.UPDATE, "project", project.id
+        )
 
         return project
 
@@ -220,7 +221,9 @@ class ProjectService:
 
         project = self.repo.update_project(project)
 
-        self.log_repo.create_log(current_user.id, AuditAction.ASSIGN, "project", project.id)
+        self.log_repo.create_log(
+            current_user.id, AuditAction.ASSIGN, "project", project.id
+        )
 
         return project
 
@@ -277,7 +280,7 @@ class ProjectService:
 
         if not member:
             raise HTTPException(404, "Member not found")
-        
+
         self.log_repo.create_log(
             current_user.id,
             AuditAction.UNASSIGN,

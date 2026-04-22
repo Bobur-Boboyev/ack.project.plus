@@ -67,5 +67,5 @@ def change_password_view(
 
 
 @router.post("/me", response_model=UserResponseDetail)
-async def get_me(current_user: Annotated[User, Depends(get_user)]):
+def get_me(current_user: Annotated[User, Depends(get_user)]):
     return current_user

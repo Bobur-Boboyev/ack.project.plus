@@ -1,10 +1,10 @@
 from typing import Annotated
 
+from fastapi import Request
 from fastapi import APIRouter, status, Depends, Body
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
-from app.models import user
 from app.schemas.auth import UserLoginResponse, RefreshRequest, ChangePasswordRequest
 from app.schemas.user import UserResponseDetail
 from app.core.deps import get_db, get_user
@@ -17,9 +17,12 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=UserLoginResponse, status_code=status.HTTP_200_OK)
 def login_view(
+    request: Request,
     credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
     db: Annotated[Session, Depends(get_db)],
 ):
+    request.app.state.limiter.limit("5/minute")(lambda: None)()
+
     user_service = UserService(db)
     login_response = user_service.authenticate_user(credentials)
 

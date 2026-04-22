@@ -44,7 +44,13 @@ class HelpRequestService:
             return self.repo.get_all()
 
         elif current_user.role == UserRole.MANAGER:
-            return self.repo.get_all()
+            return [
+                r
+                for r in self.repo.get_all()
+                if r.task
+                and r.task.project
+                and r.task.project.manager_id == current_user.id
+            ]
 
         elif current_user.role == UserRole.WORKER:
             return [r for r in self.repo.get_all() if r.requested_by == current_user.id]
@@ -62,6 +68,8 @@ class HelpRequestService:
             return help_request
 
         if current_user.role == UserRole.MANAGER:
+            if help_request.task.project.manager_id != current_user.id:
+                raise HTTPException(403, "Access denied")
             return help_request
 
         if current_user.role == UserRole.WORKER:
@@ -80,6 +88,10 @@ class HelpRequestService:
 
         if current_user.role != UserRole.MANAGER:
             raise HTTPException(403, "Only manager")
+
+        task = help_request.task
+        if task.project.manager_id != current_user.id:
+            raise HTTPException(403, "Not your project")
 
         help_request.status = HelpRequestStatus.ACCEPTED
 
@@ -102,6 +114,10 @@ class HelpRequestService:
 
         if current_user.role != UserRole.MANAGER:
             raise HTTPException(403, "Only manager")
+
+        task = help_request.task
+        if task.project.manager_id != current_user.id:
+            raise HTTPException(403, "Not your project")
 
         help_request.status = HelpRequestStatus.RESOLVED
 

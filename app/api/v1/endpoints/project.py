@@ -13,7 +13,7 @@ from app.schemas.project import (
     AddProjectMemberRequest,
     ProjectProgressResponse,
     UpdateProjectRequest,
-    ProjectDetailResponse
+    ProjectDetailResponse,
 )
 from app.services.project_service import ProjectService
 from app.models.user import User

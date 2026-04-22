@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -16,13 +18,20 @@ class TaskService:
         self.project_repo = ProjectRepo(db)
         self.log_repo = AuditLogRepo(db)
 
-    def create_task(self, data: CreateTask, project_id: int):
+    def create_task(self, data: CreateTask, project_id: int, current_user: User):
         project = self.project_repo.get_project_by_id(project_id)
 
         if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
+            raise HTTPException(404, "Project not found")
+
+        if current_user.role != UserRole.MANAGER:
+            raise HTTPException(403, "Only manager can create task")
+
+        if project.manager_id != current_user.id:
+            raise HTTPException(403, "Not your project")
+
+        if data.deadline and data.deadline < datetime.utcnow():
+            raise HTTPException(400, "Deadline cannot be in the past")
 
         task = self.task_repo.create(
             project_id=project_id,
@@ -31,24 +40,26 @@ class TaskService:
             deadline=data.deadline,
         )
 
-        self.log_repo.create_log(None, AuditAction.CREATE, "task", task.id)
+        self.log_repo.create_log(
+            current_user.id,
+            AuditAction.CREATE,
+            "task",
+            task.id,
+        )
 
         return task
 
-    def update_task(self, task_id: int, data: UpdateTask, manager):
+    def update_task(self, task_id: int, data: UpdateTask, manager: User):
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
+
+        if manager.role != UserRole.MANAGER:
+            raise HTTPException(403, "Only manager can update task")
 
         if task.project.manager_id != manager.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not allowed",
-            )
+            raise HTTPException(403, "Not allowed")
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -57,8 +68,8 @@ class TaskService:
 
             if not task.status.can_transition(new_status):
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid status transition: {task.status} → {new_status}",
+                    400,
+                    f"Invalid status transition: {task.status} → {new_status}",
                 )
 
         task = self.task_repo.update(task, update_data)
@@ -72,33 +83,24 @@ class TaskService:
 
         return task
 
-    def update_task_status(self, task_id: int, data, user):
+    def update_task_status(self, task_id: int, data, user: User):
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
 
         if not self.task_repo.get_assignment(task_id, user.id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not assigned to this task",
-            )
+            raise HTTPException(403, "You are not assigned to this task")
 
         if task.status.is_final():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Task already completed or canceled",
-            )
+            raise HTTPException(400, "Task already completed or canceled")
 
         new_status = data.status
 
         if not task.status.can_transition(new_status):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status transition: {task.status} → {new_status}",
+                400,
+                f"Invalid status transition: {task.status} → {new_status}",
             )
 
         old_status = task.status
@@ -127,28 +129,19 @@ class TaskService:
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
+
+        if manager.role != UserRole.MANAGER:
+            raise HTTPException(403, "Only manager can assign worker")
 
         if task.project.manager_id != manager.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not allowed",
-            )
+            raise HTTPException(403, "Not allowed")
 
         if self.task_repo.get_assignment(task_id, data.user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already assigned",
-            )
+            raise HTTPException(400, "User already assigned")
 
         if task.status.is_final():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot assign worker to final task",
-            )
+            raise HTTPException(400, "Cannot assign worker to final task")
 
         self.task_repo.assign_user(
             task_id=task_id,
@@ -166,32 +159,23 @@ class TaskService:
 
         return task
 
-    def unassign_worker(self, task_id: int, user_id: int, manager):
+    def unassign_worker(self, task_id: int, user_id: int, manager: User):
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
+
+        if manager.role != UserRole.MANAGER:
+            raise HTTPException(403, "Only manager can unassign worker")
 
         if task.project.manager_id != manager.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not allowed",
-            )
+            raise HTTPException(403, "Not allowed")
 
         if task.status.is_final():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot modify final task",
-            )
+            raise HTTPException(400, "Cannot modify final task")
 
         if not self.task_repo.get_assignment(task_id, user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User is not assigned to this task",
-            )
+            raise HTTPException(400, "User is not assigned to this task")
 
         self.task_repo.unassign_user(task_id, user_id)
 
@@ -204,31 +188,28 @@ class TaskService:
 
         return task
 
-    def get_task_assignments(self, task_id: int, user):
+    def get_task_assignments(self, task_id: int, user: User):
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
+
+        if user.role != UserRole.MANAGER:
+            raise HTTPException(403, "Only manager can view assignments")
 
         if task.project.manager_id != user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not allowed",
-            )
+            raise HTTPException(403, "Not allowed")
 
         return self.task_repo.get_assignments(task_id)
 
     def get_tasks(self, user: User):
-        if user.role == "admin":
+        if user.role == UserRole.ADMIN:
             return self.task_repo.get_all_tasks()
 
-        if user.role == "manager":
+        if user.role == UserRole.MANAGER:
             return self.task_repo.get_by_manager(user.id)
 
-        if user.role == "worker":
+        if user.role == UserRole.WORKER:
             return self.task_repo.get_tasks_by_user(user.id)
 
         return []
@@ -237,56 +218,36 @@ class TaskService:
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
 
-        if user.role == "admin":
+        if user.role == UserRole.ADMIN:
             return task
 
-        if user.role == "manager":
+        if user.role == UserRole.MANAGER:
             if task.project.manager_id != user.id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not allowed",
-                )
+                raise HTTPException(403, "Not allowed")
             return task
 
-        if user.role == "worker":
-            is_assigned = self.task_repo.get_assignment(task.id, user.id)
-
-            if not is_assigned:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not allowed",
-                )
-
+        if user.role == UserRole.WORKER:
+            if not self.task_repo.get_assignment(task.id, user.id):
+                raise HTTPException(403, "Not allowed")
             return task
 
     def get_task_history(self, task_id: int, user: User):
         task = self.task_repo.get_by_id(task_id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+            raise HTTPException(404, "Task not found")
 
-        if user.role == "admin":
+        if user.role == UserRole.ADMIN:
             return self.task_repo.get_status_history(task_id)
 
-        if user.role == "manager":
+        if user.role == UserRole.MANAGER:
             if task.project.manager_id != user.id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not allowed",
-                )
+                raise HTTPException(403, "Not allowed")
             return self.task_repo.get_status_history(task_id)
 
-        if user.role == "worker":
+        if user.role == UserRole.WORKER:
             if not self.task_repo.get_assignment(task_id, user.id):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed"
-                )
+                raise HTTPException(403, "Not allowed")
             return self.task_repo.get_status_history(task_id)

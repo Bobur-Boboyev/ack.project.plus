@@ -73,6 +73,6 @@ def change_password_view(
     return {"message": "Password changed successfully"}
 
 
-@router.post("/me", response_model=UserResponseDetail)
+@router.get("/me", response_model=UserResponseDetail)
 def get_me(current_user: Annotated[User, Depends(get_user)]):
     return current_user

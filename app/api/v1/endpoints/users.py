@@ -35,7 +35,8 @@ def create_user_view(
 
 @router.get("/", response_model=list[UserResponse])
 def get_users_view(
-    admin_or_manager: Annotated[User, Depends(get_admin_or_manager)], db: Annotated[Session, Depends(get_db)]
+    admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     repository = UserRepo(db)
     users = repository.get_all_users()

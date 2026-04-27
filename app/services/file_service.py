@@ -10,6 +10,7 @@ from fastapi import UploadFile, HTTPException
 from app.repository.file_repo import FileRepo
 from app.models import User, File
 from app.core.config import settings
+from app.models.user import UserRole
 
 
 class FileService:
@@ -23,7 +24,7 @@ class FileService:
         user: User,
         report_id: int,
     ):
-        if user.role not in ("admin", "manager", "worker"):
+        if user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.WORKER]:
             raise HTTPException(status_code=403, detail="Not allowed")
 
         results = []
@@ -49,7 +50,7 @@ class FileService:
         return results
 
     def get_file(self, file_id: int, user: User) -> File:
-        if user.role not in ("admin", "manager", "worker"):
+        if user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.WORKER]:
             raise HTTPException(status_code=403, detail="Not allowed")
 
         file = self.file_repo.get_file_by_id(file_id)

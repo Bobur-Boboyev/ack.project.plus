@@ -10,12 +10,12 @@ from app.models.auditlog import AuditAction
 
 
 ALLOWED_TRANSITIONS = {
-    "draft": ["assigned"],
-    "assigned": ["active", "on_hold"],
-    "active": ["on_hold", "completed"],
-    "on_hold": ["active"],
-    "completed": ["archived"],
-    "archived": [],
+    ProjectStatus.DRAFT: [ProjectStatus.ASSIGNED],
+    ProjectStatus.ASSIGNED: [ProjectStatus.ACTIVE, ProjectStatus.ON_HOLD],
+    ProjectStatus.ACTIVE: [ProjectStatus.ON_HOLD, ProjectStatus.COMPLETED],
+    ProjectStatus.ON_HOLD: [ProjectStatus.ACTIVE],
+    ProjectStatus.COMPLETED: [ProjectStatus.ARCHIVED],
+    ProjectStatus.ARCHIVED: [],
 }
 
 

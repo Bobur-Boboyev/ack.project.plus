@@ -18,6 +18,11 @@ class UserRepo:
         )
 
         self.db.add(user)
+        self.db.flush()
+
+        profile = UserProfile(user_id=user.id)
+        self.db.add(profile)
+
         self.db.commit()
         self.db.refresh(user)
 

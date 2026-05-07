@@ -11,12 +11,14 @@ from app.repository.file_repo import FileRepo
 from app.models import User, File
 from app.core.config import settings
 from app.models.user import UserRole
+from app.repository.report_repo import ReportRepo
 
 
 class FileService:
     def __init__(self, db: Session):
         self.db = db
         self.file_repo = FileRepo(db)
+        self.report_repo = ReportRepo(db)
 
     def upload_files(
         self,
@@ -26,6 +28,9 @@ class FileService:
     ):
         if user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.WORKER]:
             raise HTTPException(status_code=403, detail="Not allowed")
+
+        if not self.report_repo.get_by_id(report_id):
+            raise HTTPException(status_code=404, detail="Report not found")
 
         results = []
 

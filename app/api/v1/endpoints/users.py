@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, status, Depends, Body, Path
+from fastapi import APIRouter, status, Depends, Body, Path, Query
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,8 @@ from app.schemas.user import (
     CreateUser,
     UserResponse,
     UpdateUserData,
+    UsersListResponse,
+    UserQueryParams,
 )
 from app.schemas.project import ProjectResponse
 from app.schemas.auth import ChangePasswordRequest
@@ -33,15 +35,15 @@ def create_user_view(
     return user
 
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("/", response_model=UsersListResponse)
 def get_users_view(
     admin_or_manager: Annotated[User, Depends(get_admin_or_manager)],
     db: Annotated[Session, Depends(get_db)],
+    params: Annotated[UserQueryParams, Depends()],
 ):
     repository = UserRepo(db)
-    users = repository.get_all_users()
 
-    return users
+    return repository.get_all_users(params)
 
 
 @router.get("/{id}", response_model=UserResponseDetail)

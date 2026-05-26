@@ -15,7 +15,7 @@ class UserRepo:
         user = User(
             username=data.username,
             email=data.email,
-            role=data.role,
+               role=data.role,
             password_hash=data.password,
         )
 

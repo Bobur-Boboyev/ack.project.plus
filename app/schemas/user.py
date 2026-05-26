@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Optional
 
 from pydantic import (
     BaseModel,
@@ -9,6 +10,7 @@ from pydantic import (
     EmailStr,
     ConfigDict,
 )
+from enum import Enum
 
 from app.models.user import UserRole
 from app.schemas.user_profile import UserProfile
@@ -97,10 +99,6 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-from pydantic import BaseModel, Field, EmailStr, model_validator, ConfigDict
-from typing import Optional
-
-
 class UpdateUserData(BaseModel):
     username: Optional[str] = Field(default=None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
@@ -133,3 +131,38 @@ class UpdateUserData(BaseModel):
             )
 
         return v
+
+
+class UsersListResponse(BaseModel):
+    items: list[UserResponse]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
+
+class UserSortField(str, Enum):
+    created_at = "created_at"
+    username = "username"
+    email = "email"
+
+
+class SortOrder(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
+
+class UserRole(str, Enum):
+    admin = "admin"
+    manager = "manager"
+    worker = "worker"
+
+
+class UserQueryParams(BaseModel):
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=20, ge=1, le=100)
+    search: str | None = None
+    role: UserRole | None = None
+    is_active: bool | None = None
+    sort_by: UserSortField = UserSortField.created_at
+    order: SortOrder = SortOrder.desc

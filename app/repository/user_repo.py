@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
+from math import ceil
 
 from app.models import User, UserProfile, RefreshToken
-from app.schemas.user import CreateUser, UpdateUserData
+from app.schemas.user import CreateUser, UpdateUserData, UserSortField, UserQueryParams
 from app.schemas.user_profile import UpdateProfile
 
 
@@ -83,8 +85,55 @@ class UserRepo:
 
         return user
 
-    def get_all_users(self) -> list[User] | None:
-        return self.db.query(User).filter(User.is_active == True).all()
+    def get_all_users(
+        self,
+        params: UserQueryParams,
+    ) -> list[User]:
+        
+        query = self.db.query(User)
+
+        if params.is_active is not None:
+            query = query.filter(User.is_active == params.is_active)
+
+        if params.role:
+            query = query.filter(User.role == params.role)
+
+        if params.search:
+            search_term = f"%{params.search}%"
+
+            query = query.filter(
+                (User.username.ilike(search_term)) |
+                (User.email.ilike(search_term))
+            )
+
+        sortable_fields = {
+            UserSortField.created_at: User.created_at,
+            UserSortField.username: User.username,
+            UserSortField.email: User.email,
+        }
+
+        sort_column = sortable_fields.get(params.sort_by, User.created_at)
+
+        if params.order == "asc":
+            query = query.order_by(asc(sort_column))
+        else:
+            query = query.order_by(desc(sort_column))
+            
+        offset = (params.page - 1) * params.limit
+
+        query = query.offset(offset).limit(params.limit)
+        
+        users = query.all()
+        total = query.count()
+
+        return {
+            "items": users,
+            "total": total,
+            "page": params.page,
+            "limit": params.limit,
+            "total_pages": ceil(total / params.limit),
+        }
+
 
     def get_user_by_username(self, username: str):
         return self.db.query(User).filter(User.username == username).first()

@@ -3,6 +3,7 @@ from sqlalchemy import asc, desc
 from math import ceil
 
 from app.models import User, UserProfile, RefreshToken
+from app.models.skills import Skill
 from app.schemas.user import CreateUser, UpdateUserData, UserSortField, UserQueryParams
 from app.schemas.user_profile import UpdateProfile
 
@@ -18,6 +19,13 @@ class UserRepo:
                role=data.role,
             password_hash=data.password,
         )
+
+        skills = []
+
+        if data.skill_ids:
+            skills = self.db.query(Skill).filter(Skill.id.in_(data.skill_ids)).all()
+
+        user.skills = skills
 
         self.db.add(user)
         self.db.flush()

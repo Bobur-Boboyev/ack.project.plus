@@ -8,7 +8,6 @@ class Skill(Base, TimestampMixin):
 
     id = mapped_column(Integer, primary_key=True)
     name = mapped_column(String, unique=True)
-    category = mapped_column(String)
 
     users: Mapped[list["UserSkill"]] = relationship(
         "UserSkill",

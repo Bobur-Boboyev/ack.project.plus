@@ -1,0 +1,18 @@
+from sqlalchemy.orm import Session
+
+from app.models.skills import Skill
+
+
+class SkillRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_skill(self, name: str) -> Skill:
+        skill = Skill(name=name)
+        self.db.add(skill)
+        self.db.commit()
+        self.db.refresh(skill)
+        return skill
+    
+    def get_by_name(self, name: str) -> Skill | None:
+        return self.db.query(Skill).filter(Skill.name == name).first()

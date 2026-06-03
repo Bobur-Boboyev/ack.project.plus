@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
+from fastapi import Query
 from pydantic import (
     BaseModel,
     Field,
@@ -163,12 +164,23 @@ class UserRole(str, Enum):
     worker = "worker"
 
 
-class UserQueryParams(BaseModel):
-    page: int = Field(default=1, ge=1)
-    limit: int = Field(default=20, ge=1, le=100)
-    search: str | None = None
-    role: UserRole | None = None
-    is_active: bool | None = None
-    sort_by: UserSortField = UserSortField.created_at
-    order: SortOrder = SortOrder.desc
-    skill_ids: list[int] = Field(default_factory=list)
+class UserQueryParams:
+    def __init__(
+        self,
+        page: int = Query(1, ge=1),
+        limit: int = Query(20, ge=1, le=100),
+        search: str | None = Query(None),
+        role: UserRole | None = Query(None),
+        is_active: bool | None = Query(None),
+        sort_by: UserSortField = Query(UserSortField.created_at),
+        order: SortOrder = Query(SortOrder.desc),
+        skill_ids: list[int] = Query(default_factory=list),
+    ):
+        self.page = page
+        self.limit = limit
+        self.search = search
+        self.role = role
+        self.is_active = is_active
+        self.sort_by = sort_by
+        self.order = order
+        self.skill_ids = skill_ids

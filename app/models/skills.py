@@ -1,9 +1,9 @@
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship, ForeignKey
+from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models import Base, TimestampMixin
+from app.models.base import Base
 
-class Skill(Base, TimestampMixin):
+class Skill(Base):
     __tablename__ = "skills"
 
     id = mapped_column(Integer, primary_key=True)

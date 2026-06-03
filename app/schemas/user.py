@@ -171,3 +171,4 @@ class UserQueryParams(BaseModel):
     is_active: bool | None = None
     sort_by: UserSortField = UserSortField.created_at
     order: SortOrder = SortOrder.desc
+    skill_ids: list[int] = Field(default_factory=list)

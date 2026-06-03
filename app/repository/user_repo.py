@@ -55,7 +55,7 @@ class UserRepo:
             user.password_hash = data.password
 
         user.skills = skills
-        
+
         self.db.commit()
 
         return user
@@ -105,6 +105,9 @@ class UserRepo:
     ) -> list[User]:
         
         query = self.db.query(User)
+
+        if params.skill_ids:
+            query = query.join(User.skills).filter(Skill.id.in_(params.skill_ids))
 
         if params.is_active is not None:
             query = query.filter(User.is_active == params.is_active)

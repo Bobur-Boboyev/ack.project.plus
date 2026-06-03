@@ -68,3 +68,14 @@ def delete_skill_view(
 ):
     service = SkillService(db)
     service.delete_skill(id=id, admin=admin)
+
+
+@router.get("/my", response_model=list[SkillResponse])
+def get_my_skills_view(
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_user)],
+):
+    service = SkillService(db)
+    skills = service.get_user_skills(user)
+
+    return skills

@@ -54,3 +54,7 @@ class SkillService:
             raise HTTPException(status_code=404, detail="Skill not found")
         
         self.skill_repo.delete_skill(id)
+
+    
+    def get_my_skills(self, user: User) -> list[Skill]:
+        return user.skills

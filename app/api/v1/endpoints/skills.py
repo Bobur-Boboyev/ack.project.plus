@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db, get_admin
+from app.core.deps import get_db, get_admin, get_user
 from app.models import User
 from app.schemas.skills import SkillResponse
 from app.services.skills_service import SkillService
@@ -23,3 +23,13 @@ def create_skill_view(
     skill = service.create_skill(name=data.name, admin=admin)
     
     return skill    
+
+
+@router.get("/", response_model=list[SkillResponse])
+def list_skills_view(
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_user)],
+):
+    service = SkillService(db)
+    skills = service.list_skills()
+    return skills

@@ -18,3 +18,6 @@ class SkillService:
             raise ValueError("Skill with this name already exists")
 
         return self.skill_repo.create_skill(name)
+    
+    def list_skills(self) -> list[Skill]:
+        return self.skill_repo.get_all_skills()

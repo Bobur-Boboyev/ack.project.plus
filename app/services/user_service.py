@@ -83,6 +83,12 @@ class UserService:
         if data.password:
             data.password = hash_password(data.password)
 
+        if data.skill_ids is not None:
+            for skill_id in data.skill_ids:
+                skill = self.skill_repo.get_by_id(skill_id)
+                if not skill:
+                    raise HTTPException(status_code=400, detail=f"Skill with id {skill_id} not found")
+
         return self.user_repo.update_user(id, data)
 
     def update_avatar(self, user: User, file: UploadFile):

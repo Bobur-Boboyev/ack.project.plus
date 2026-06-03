@@ -13,6 +13,7 @@ from pydantic import (
 from enum import Enum
 
 from app.models.user import UserRole
+from app.schemas.skills import SkillResponse
 from app.schemas.user_profile import UserProfile
 from app.schemas.project import ProjectResponse
 from app.schemas.task import TaskResponse, TaskAssignmentResponse
@@ -77,6 +78,7 @@ class UserResponseDetail(BaseModel):
     email: EmailStr | None
 
     profile: UserProfile | None
+    skills: list[SkillResponse] | None = []
 
     managed_projects: list[ProjectResponse] | None = []
     task_assignments: list[TaskAssignmentResponse] | None = []
@@ -94,6 +96,7 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr | None
     role: UserRole
+    skills: list[SkillResponse] | None = []
     is_active: bool
     created_at: datetime
 
@@ -104,6 +107,7 @@ class UpdateUserData(BaseModel):
     username: Optional[str] = Field(default=None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     role: Optional[UserRole] = None
+    skill_ids: Optional[list[int]] = None
 
     password: Optional[str] = Field(default=None, min_length=8, max_length=128)
     confirm_password: Optional[str] = Field(default=None, min_length=8, max_length=128)

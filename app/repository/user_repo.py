@@ -41,6 +41,10 @@ class UserRepo:
     def update_user(self, id: int, data: UpdateUserData) -> User:
         user = self.get_user_by_id(id)
 
+        skills = []
+        if data.skill_ids is not None:
+            skills = self.db.query(Skill).filter(Skill.id.in_(data.skill_ids)).all()
+
         if data.username:
             user.username = data.username
         if data.email:
@@ -50,6 +54,8 @@ class UserRepo:
         if data.password:
             user.password_hash = data.password
 
+        user.skills = skills
+        
         self.db.commit()
 
         return user

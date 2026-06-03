@@ -33,3 +33,15 @@ def list_skills_view(
     service = SkillService(db)
     skills = service.list_skills()
     return skills
+
+
+@router.get("/{id}", response_model=SkillResponse)
+def get_skill_view(
+    id: Annotated[int, Body()],
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_user)],
+):
+    service = SkillService(db)
+    skill = service.get_skill_by_id(id)
+    
+    return skill

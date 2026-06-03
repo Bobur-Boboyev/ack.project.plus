@@ -19,3 +19,6 @@ class SkillRepository:
     
     def get_all_skills(self) -> list[Skill]:
         return self.db.query(Skill).all()
+    
+    def get_by_id(self, id: int) -> Skill | None:
+        return self.db.query(Skill).filter(Skill.id == id).first()

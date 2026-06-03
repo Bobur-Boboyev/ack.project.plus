@@ -21,3 +21,9 @@ class SkillService:
     
     def list_skills(self) -> list[Skill]:
         return self.skill_repo.get_all_skills()
+    
+    def get_skill_by_id(self, id: int) -> Skill:
+        skill = self.skill_repo.get_by_id(id)
+        if not skill:
+            raise ValueError("Skill not found")
+        return skill

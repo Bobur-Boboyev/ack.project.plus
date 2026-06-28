@@ -119,3 +119,45 @@ class DailyReportQueryParams:
         self.created_to = created_to
         self.sort_by = sort_by
         self.order = order
+
+
+class MonthlyReportSortField(str, enum.Enum):
+    id = "id"
+    year = "year"
+    month = "month"
+    total_reports = "total_reports"
+    status = "status"
+    submitted_at = "submitted_at"
+    updated_at = "updated_at"
+
+
+class MonthlyReportQueryParams:
+    def __init__(
+        self,
+        page: int = Query(1, ge=1),
+        limit: int = Query(20, ge=1, le=100),
+        ids: list[int] = Query(default_factory=list),
+        user_id: int | None = Query(None),
+        project_ids: list[int] = Query(default_factory=list),
+        status: list[MonthlyReportStatus] = Query(default_factory=list),
+        year: int | None = Query(None, ge=2000),
+        month: int | None = Query(None, ge=1, le=12),
+        submitted_from: datetime | None = Query(None),
+        submitted_to: datetime | None = Query(None),
+        sort_by: MonthlyReportSortField = Query(
+            MonthlyReportSortField.submitted_at
+        ),
+        order: SortOrder = Query(SortOrder.desc)
+    ):
+        self.page = page
+        self.limit = limit
+        self.ids = ids
+        self.user_id = user_id
+        self.project_ids = project_ids
+        self.status = status
+        self.year = year
+        self.month = month
+        self.submitted_from = submitted_from
+        self.submitted_to = submitted_to
+        self.sort_by = sort_by
+        self.order = order

@@ -11,7 +11,8 @@ from app.schemas.report import (
     MonthlyReportItem,
     MonthlyReportResponse,
     MonthlyReportSubmitResponse,
-    DailyReportQueryParams
+    DailyReportQueryParams,
+    MonthlyReportQueryParams,
 )
 from app.core.deps import get_db, get_worker, get_user
 from app.models import User
@@ -116,11 +117,13 @@ def submit_monthly_report_view(
 
 @router.get("/monthly", response_model=list[MonthlyReportSubmitResponse])
 def get_monthly_reports_view(
-    db: Annotated[Session, Depends(get_db)], user: Annotated[User, Depends(get_user)]
+    db: Annotated[Session, Depends(get_db)], 
+    user: Annotated[User, Depends(get_user)],
+    params: Annotated[MonthlyReportQueryParams, Depends()]
 ):
     service = ReportService(db)
 
-    return service.get_monthly_reports(user=user)
+    return service.get_monthly_reports(user=user, params=params)
 
 
 @router.get("/monthly/{id}", response_model=MonthlyReportSubmitResponse)

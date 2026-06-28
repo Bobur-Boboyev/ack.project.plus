@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models import Task, TaskAssignment, DailyReport, User, MonthlyReportSubmission
-from app.schemas.report import DailyReportSortField, SortOrder
+from app.schemas.report import DailyReportSortField, SortOrder, MonthlyReportSortField
 
 
 class ReportRepo:
@@ -176,6 +176,8 @@ class ReportRepo:
         self.db.commit()
         self.db.refresh(submission)
         return submission
+    
+
 
     def get_submission(self, user_id: int, project_id: int, year: int, month: int):
         return (
@@ -230,3 +232,71 @@ class ReportRepo:
             .filter(MonthlyReportSubmission.id == monthly_report_id)
             .first()
         )
+    
+    def filter_monthly_reports(self, params):
+        stmt = self.db.query(MonthlyReportSubmission)
+
+        if params.ids:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.id.in_(params.ids)
+            )
+
+        if params.user_id:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.user_id == params.user_id
+            )
+
+        if params.project_ids:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.project_id.in_(params.project_ids)
+            )
+
+        if params.status:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.status.in_(params.status)
+            )
+
+        if params.year:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.year == params.year
+            )
+
+
+        if params.month:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.month == params.month
+            )
+
+        if params.submitted_from:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.submitted_at >= params.submitted_from
+            )
+
+        if params.submitted_to:
+            stmt = stmt.filter(
+                MonthlyReportSubmission.submitted_at <= params.submitted_to
+            )
+
+        SORT_FIELDS = {
+            MonthlyReportSortField.id: MonthlyReportSubmission.id,
+            MonthlyReportSortField.year: MonthlyReportSubmission.year,
+            MonthlyReportSortField.month: MonthlyReportSubmission.month,
+            MonthlyReportSortField.total_reports: MonthlyReportSubmission.total_reports,
+            MonthlyReportSortField.status: MonthlyReportSubmission.status,
+            MonthlyReportSortField.submitted_at: MonthlyReportSubmission.submitted_at,
+            MonthlyReportSortField.updated_at: MonthlyReportSubmission.updated_at,
+        }
+
+        column = SORT_FIELDS[params.sort_by]
+
+        stmt = stmt.order_by(
+            column.asc()
+            if params.order == SortOrder.asc
+            else column.desc()
+        )
+
+        stmt = stmt.offset(
+            (params.page - 1) * params.limit
+        ).limit(params.limit)
+
+        return stmt.all()

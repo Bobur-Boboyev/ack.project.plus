@@ -11,6 +11,7 @@ from app.schemas.report import (
     MonthlyReportItem,
     MonthlyReportResponse,
     MonthlyReportSubmitResponse,
+    DailyReportQueryParams
 )
 from app.core.deps import get_db, get_worker, get_user
 from app.models import User
@@ -41,9 +42,10 @@ def create_daily_report_view(
 def get_reports_view(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_user)],
+    params: Annotated[DailyReportQueryParams, Depends()],
 ):
     service = ReportService(db)
-    return service.get_reports(user=user)
+    return service.get_reports(user=user, params=params)
 
 
 @router.get("/daily/{id}", response_model=ReportDetailResponse)

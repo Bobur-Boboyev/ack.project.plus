@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models import Task, TaskAssignment, DailyReport, User, MonthlyReportSubmission
+from app.schemas.report import DailyReportSortField, SortOrder
 
 
 class ReportRepo:
@@ -18,6 +19,76 @@ class ReportRepo:
         self.db.commit()
         self.db.refresh(report)
         return report
+    
+    def filter_reports(self, params):
+        stmt = self.db.query(DailyReport)
+
+        if params.search:
+            stmt = stmt.filter(
+                DailyReport.text.ilike(f"%{params.search}%")
+            )
+
+        if params.ids:
+            stmt = stmt.filter(DailyReport.id.in_(params.ids))
+
+        if params.user_id:
+            stmt = stmt.filter(
+                DailyReport.user_id == params.user_id
+            )
+
+        if params.project_ids:
+            stmt = stmt.filter(
+                DailyReport.project_id.in_(params.project_ids)
+            )
+
+        if params.task_id:
+            stmt = stmt.filter(
+                DailyReport.task_id == params.task_id
+            )
+
+        if params.report_date:
+            stmt = stmt.filter(
+                DailyReport.report_date == params.report_date
+            )
+
+        if params.report_date_from:
+            stmt = stmt.filter(
+                DailyReport.report_date >= params.report_date_from
+            )
+
+        if params.report_date_to:
+            stmt = stmt.filter(
+                DailyReport.report_date <= params.report_date_to
+            )
+
+        if params.created_from:
+            stmt = stmt.filter(
+                DailyReport.created_at >= params.created_from
+            )
+
+        if params.created_to:
+            stmt = stmt.filter(
+                DailyReport.created_at <= params.created_to
+            )
+
+        SORT_FIELDS = {
+            DailyReportSortField.id: DailyReport.id,
+            DailyReportSortField.report_date: DailyReport.report_date,
+            DailyReportSortField.created_at: DailyReport.created_at,
+        }
+        column = SORT_FIELDS[params.sort_by]
+
+        stmt = stmt.order_by(
+            column.asc()
+            if params.order == SortOrder.asc
+            else column.desc()
+        )
+
+        stmt = stmt.offset(
+            (params.page - 1) * params.limit
+        ).limit(params.limit)
+
+        return stmt.all()
 
     def create_submission(self, **data):
         obj = MonthlyReportSubmission(**data)

@@ -97,22 +97,28 @@ class ReportService:
 
         return self.repo.update(report, update_data)
 
-    def get_reports(self, user):
+    def get_reports(self, user, params):
         if user.role == UserRole.ADMIN:
-            return self.repo.get_all()
+            pass
 
-        if user.role == UserRole.MANAGER:
+        elif user.role == UserRole.MANAGER:
             project_ids = self.project_repo.get_user_project_ids(user.id)
 
             if not project_ids:
                 return []
 
-            return self.repo.get_by_projects(project_ids)
+            params.project_ids = project_ids
 
-        if user.role == UserRole.WORKER:
-            return self.repo.get_report_by_user(user.id)
+        elif user.role == UserRole.WORKER:
+            params.user_id = user.id
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied",
+            )
+
+        return self.repo.filter_reports(params)
 
     def get_report(self, report_id: int, user):
         report = self.repo.get_by_id(report_id)

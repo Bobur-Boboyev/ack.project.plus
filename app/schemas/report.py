@@ -13,6 +13,7 @@ class CreateDailyReport(BaseModel):
     project_id: int = Field(..., gt=0)
     task_id: int = Field(..., gt=0)
     text: str = Field(default=None, max_length=5000)
+    report_date: date = Field(default_factory=date.today)  # ← qo'shing
 
 
 class ReportResponse(BaseModel):

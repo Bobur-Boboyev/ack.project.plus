@@ -9,6 +9,7 @@ from app.schemas.notification import (
     NotificationResponse,
     UnreadCountResponse,
     MessageResponse,
+    NotificationCreate
 )
 from app.models.user import User
 
@@ -52,3 +53,17 @@ def unread_count(
 ):
     service = NotificationService(db)
     return service.get_unread_count(current_user)
+
+
+@router.post("", response_model=NotificationResponse)
+def create_notification(
+    payload: NotificationCreate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_user)],
+):
+    service = NotificationService(db)
+    return service.create_notification(
+        user_id=payload.user_id,
+        title=payload.title,
+        message=payload.message,
+    )

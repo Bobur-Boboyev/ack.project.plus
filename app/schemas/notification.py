@@ -19,3 +19,9 @@ class UnreadCountResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class NotificationCreate(BaseModel):
+    user_id: int
+    title: str
+    message: str

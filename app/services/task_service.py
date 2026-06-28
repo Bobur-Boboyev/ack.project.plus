@@ -9,6 +9,7 @@ from app.repository.task_repo import TaskRepo
 from app.repository.project_repo import ProjectRepo
 from app.repository.auditlog_repo import AuditLogRepo
 from app.models.auditlog import AuditAction
+from app.services.notification_service import NotificationService
 
 
 class TaskService:
@@ -17,6 +18,7 @@ class TaskService:
         self.task_repo = TaskRepo(db)
         self.project_repo = ProjectRepo(db)
         self.log_repo = AuditLogRepo(db)
+        self.notification_service = NotificationService(db)
 
     def create_task(self, data: CreateTask, project_id: int, current_user: User):
         project = self.project_repo.get_project_by_id(project_id)
@@ -104,7 +106,6 @@ class TaskService:
             )
 
         old_status = task.status
-
         task.status = new_status
 
         self.task_repo.add_status_history(
@@ -122,6 +123,14 @@ class TaskService:
             "task",
             task.id,
         )
+
+        # Manager ga notification — worker task statusini o'zgartirdi
+        if task.project and task.project.manager_id:
+            self.notification_service.create_notification(
+                user_id=task.project.manager_id,
+                title="Task Status Updated",
+                message=f"Task '{task.title}' status: {old_status} → {new_status}",
+            )
 
         return task
 
@@ -157,6 +166,13 @@ class TaskService:
             task.id,
         )
 
+        # Worker ga notification — unga task biriktirildi
+        self.notification_service.create_notification(
+            user_id=data.user_id,
+            title="New Task Assigned",
+            message=f"You have been assigned to task: '{task.title}'",
+        )
+
         return task
 
     def unassign_worker(self, task_id: int, user_id: int, manager: User):
@@ -184,6 +200,13 @@ class TaskService:
             AuditAction.UNASSIGN,
             "task",
             task.id,
+        )
+
+        # Worker ga notification — taskdan olib tashlandi
+        self.notification_service.create_notification(
+            user_id=user_id,
+            title="Task Unassigned",
+            message=f"You have been removed from task: '{task.title}'",
         )
 
         return task

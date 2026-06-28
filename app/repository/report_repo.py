@@ -7,22 +7,30 @@ class ReportRepo:
     def __init__(self, db: Session):
         self.db = db
 
+    def create(self, user_id: int, project_id: int, task_id: int, text: str) -> DailyReport:
+        report = DailyReport(
+            user_id=user_id,
+            project_id=project_id,
+            task_id=task_id,
+            text=text,
+        )
+        self.db.add(report)
+        self.db.commit()
+        self.db.refresh(report)
+        return report
+
     def create_submission(self, **data):
         obj = MonthlyReportSubmission(**data)
-
         self.db.add(obj)
         self.db.commit()
         self.db.refresh(obj)
-
         return obj
 
     def update_submission(self, obj, data: dict):
         for k, v in data.items():
             setattr(obj, k, v)
-
         self.db.commit()
         self.db.refresh(obj)
-
         return obj
 
     def get_report_by_user(self, user_id: int) -> list[DailyReport]:
@@ -57,18 +65,11 @@ class ReportRepo:
     def update(self, report, data: dict):
         for key, value in data.items():
             setattr(report, key, value)
-
         self.db.commit()
         self.db.refresh(report)
-
         return report
 
-    def get_reports_by_project_and_date_range(
-        self,
-        project_id: int,
-        start_date,
-        end_date,
-    ):
+    def get_reports_by_project_and_date_range(self, project_id: int, start_date, end_date):
         return (
             self.db.query(DailyReport)
             .filter(
@@ -92,14 +93,7 @@ class ReportRepo:
             .all()
         )
 
-    def create_monthly_submission(
-        self,
-        user_id: int,
-        project_id: int,
-        year: int,
-        month: int,
-        total_reports: int,
-    ):
+    def create_monthly_submission(self, user_id: int, project_id: int, year: int, month: int, total_reports: int):
         submission = MonthlyReportSubmission(
             user_id=user_id,
             project_id=project_id,
@@ -107,20 +101,12 @@ class ReportRepo:
             month=month,
             total_reports=total_reports,
         )
-
         self.db.add(submission)
         self.db.commit()
         self.db.refresh(submission)
-
         return submission
 
-    def get_submission(
-        self,
-        user_id: int,
-        project_id: int,
-        year: int,
-        month: int,
-    ):
+    def get_submission(self, user_id: int, project_id: int, year: int, month: int):
         return (
             self.db.query(MonthlyReportSubmission)
             .filter(
@@ -142,7 +128,6 @@ class ReportRepo:
     def get_monthly_report_by_projects(self, project_ids):
         if not project_ids:
             return []
-
         return (
             self.db.query(MonthlyReportSubmission)
             .filter(MonthlyReportSubmission.project_id.in_(project_ids))
@@ -152,6 +137,10 @@ class ReportRepo:
             )
             .all()
         )
+
+    # Alias — eski nom bilan chaqirilsa ham ishlaydi
+    def get_by_projects_monthly(self, project_ids):
+        return self.get_monthly_report_by_projects(project_ids)
 
     def get_monthly_reports_by_user(self, user_id):
         return (
@@ -164,9 +153,7 @@ class ReportRepo:
             .all()
         )
 
-    def get_monthly_report_by_id(
-        self, monthly_report_id: int
-    ) -> MonthlyReportSubmission:
+    def get_monthly_report_by_id(self, monthly_report_id: int) -> MonthlyReportSubmission:
         return (
             self.db.query(MonthlyReportSubmission)
             .filter(MonthlyReportSubmission.id == monthly_report_id)

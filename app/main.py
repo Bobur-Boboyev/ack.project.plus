@@ -8,8 +8,8 @@ from slowapi import _rate_limit_exceeded_handler
 from app.api import router
 from app.db.init_db import create_tables, drop_tables
 
-# drop_tables()
-# create_tables()
+drop_tables()
+create_tables()
 
 app = FastAPI(title="Ack Project")
 

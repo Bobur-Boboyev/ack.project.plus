@@ -3,6 +3,7 @@ from sqlalchemy import asc, desc
 from math import ceil
 
 from app.models import User, UserProfile, RefreshToken
+from app.models.skills import Skill
 from app.schemas.user import CreateUser, UpdateUserData, UserSortField, UserQueryParams
 from app.schemas.user_profile import UpdateProfile
 
@@ -19,6 +20,13 @@ class UserRepo:
             password_hash=data.password,
         )
 
+        skills = []
+
+        if data.skill_ids:
+            skills = self.db.query(Skill).filter(Skill.id.in_(data.skill_ids)).all()
+
+        user.skills = skills
+
         self.db.add(user)
         self.db.flush()
 
@@ -33,6 +41,10 @@ class UserRepo:
     def update_user(self, id: int, data: UpdateUserData) -> User:
         user = self.get_user_by_id(id)
 
+        skills = []
+        if data.skill_ids is not None:
+            skills = self.db.query(Skill).filter(Skill.id.in_(data.skill_ids)).all()
+
         if data.username:
             user.username = data.username
         if data.email:
@@ -41,6 +53,8 @@ class UserRepo:
             user.role = data.role
         if data.password:
             user.password_hash = data.password
+
+        user.skills = skills
 
         self.db.commit()
 
@@ -91,6 +105,9 @@ class UserRepo:
     ) -> list[User]:
         
         query = self.db.query(User)
+
+        if params.skill_ids:
+            query = query.join(User.skills).filter(Skill.id.in_(params.skill_ids))
 
         if params.is_active is not None:
             query = query.filter(User.is_active == params.is_active)

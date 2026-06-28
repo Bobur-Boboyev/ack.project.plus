@@ -9,6 +9,7 @@ from app.repository.project_repo import ProjectRepo
 from app.repository.task_repo import TaskRepo
 from app.repository.report_repo import ReportRepo
 from app.repository.file_repo import FileRepo
+from app.repository.skills_repo import SkillRepository
 from app.schemas.auth import UserLoginResponse, ChangePasswordRequest
 from app.schemas.user import CreateUser, UpdateUserData
 from app.schemas.user_profile import UpdateProfile
@@ -34,6 +35,7 @@ class UserService:
         self.task_repo = TaskRepo(db)
         self.report_repo = ReportRepo(db)
         self.file_repo = FileRepo(db)
+        self.skill_repo = SkillRepository(db)
 
     def create_user(self, data: CreateUser) -> User:
         user = self.user_repo.get_user_by_username(data.username)
@@ -48,6 +50,12 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="email already exist"
             )
+        
+        if data.skill_ids:
+            for skill_id in data.skill_ids:
+                skill = self.skill_repo.get_by_id(skill_id)
+                if not skill:
+                    raise HTTPException(status_code=400, detail=f"Skill with id {skill_id} not found")
 
         data.password = hash_password(data.password)
 
@@ -74,6 +82,12 @@ class UserService:
                 )
         if data.password:
             data.password = hash_password(data.password)
+
+        if data.skill_ids is not None:
+            for skill_id in data.skill_ids:
+                skill = self.skill_repo.get_by_id(skill_id)
+                if not skill:
+                    raise HTTPException(status_code=400, detail=f"Skill with id {skill_id} not found")
 
         return self.user_repo.update_user(id, data)
 

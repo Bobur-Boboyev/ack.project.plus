@@ -41,3 +41,8 @@ class User(Base):
         back_populates="assigner",
     )
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    skills: Mapped[list["Skill"]] = relationship(
+        "Skill",
+        secondary="user_skills",
+        lazy="selectin"
+    )

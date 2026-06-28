@@ -17,3 +17,4 @@ from app.models.monthly_report_submission import (
     MonthlyReportSubmission,
     MonthlyReportStatus,
 )
+from app.models.skills import Skill, UserSkill

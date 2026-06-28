@@ -63,6 +63,8 @@ class ProjectRepo:
 
         stmt = stmt.order_by(column.asc() if params.sort_order == "asc" else column.desc())
 
+        stmt = stmt.offset((params.page - 1) * params.limit).limit(params.limit)
+
         return self.db.execute(stmt).scalars().all()
 
     def get_user_by_id(self, id: int):

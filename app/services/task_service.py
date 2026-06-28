@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models import User, UserRole
-from app.schemas.task import CreateTask, UpdateTask, AssignWorkerRequest
+from app.schemas.task import CreateTask, TaskQueryParams, UpdateTask, AssignWorkerRequest
 from app.repository.task_repo import TaskRepo
 from app.repository.project_repo import ProjectRepo
 from app.repository.auditlog_repo import AuditLogRepo
@@ -202,15 +202,17 @@ class TaskService:
 
         return self.task_repo.get_assignments(task_id)
 
-    def get_tasks(self, user: User):
+    def get_tasks(self, user: User, params: TaskQueryParams):
         if user.role == UserRole.ADMIN:
             return self.task_repo.get_all_tasks()
 
         if user.role == UserRole.MANAGER:
-            return self.task_repo.get_by_manager(user.id)
+            params.manager_id = user.id
+            return self.task_repo.filter_tasks(params)
 
         if user.role == UserRole.WORKER:
-            return self.task_repo.get_tasks_by_user(user.id)
+            params.worker_ids = [user.id]
+            return self.task_repo.filter_tasks(params)
 
         return []
 

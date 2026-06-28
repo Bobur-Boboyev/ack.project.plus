@@ -25,7 +25,7 @@ def create_help_request(
 def get_help_requests(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_user)],
-    params: Annotated[HelpRequestQueryParams, Depends]
+    params: Annotated[HelpRequestQueryParams, Depends()]
 ):
     return HelpRequestService(db).get_all(current_user, params)
 

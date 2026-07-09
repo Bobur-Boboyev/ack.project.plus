@@ -50,12 +50,14 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="email already exist"
             )
-        
+
         if data.skill_ids:
             for skill_id in data.skill_ids:
                 skill = self.skill_repo.get_by_id(skill_id)
                 if not skill:
-                    raise HTTPException(status_code=400, detail=f"Skill with id {skill_id} not found")
+                    raise HTTPException(
+                        status_code=400, detail=f"Skill with id {skill_id} not found"
+                    )
 
         data.password = hash_password(data.password)
 
@@ -87,7 +89,9 @@ class UserService:
             for skill_id in data.skill_ids:
                 skill = self.skill_repo.get_by_id(skill_id)
                 if not skill:
-                    raise HTTPException(status_code=400, detail=f"Skill with id {skill_id} not found")
+                    raise HTTPException(
+                        status_code=400, detail=f"Skill with id {skill_id} not found"
+                    )
 
         return self.user_repo.update_user(id, data)
 

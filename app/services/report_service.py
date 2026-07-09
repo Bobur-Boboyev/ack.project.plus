@@ -112,7 +112,9 @@ class ReportService:
         if user.role == UserRole.WORKER:
             return self.repo.get_report_by_user(user.id)
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def get_report(self, report_id: int, user):
         report = self.repo.get_by_id(report_id)
@@ -130,15 +132,21 @@ class ReportService:
         if user.role == UserRole.MANAGER:
             project = self.project_repo.get_project_by_id(report.project_id)
             if not project or project.manager_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return report
 
         if user.role == UserRole.WORKER:
             if report.user_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return report
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def generate_monthly_report(self, user, year: int, month: int, project_id: int):
         if user.role == UserRole.ADMIN:
@@ -255,7 +263,9 @@ class ReportService:
             submissions = self.repo.get_monthly_reports_by_user(user.id)
             return self._attach_reports(submissions)
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def get_monthly_report_by_id(self, submission_id: int, user: User):
         monthly_report = self.repo.get_monthly_report_by_id(submission_id)
@@ -272,15 +282,21 @@ class ReportService:
         if user.role == UserRole.MANAGER:
             project = self.project_repo.get_project_by_id(monthly_report.project_id)
             if not project or project.manager_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return self._attach_reports([monthly_report])[0]
 
         if user.role == UserRole.WORKER:
             if monthly_report.user_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return self._attach_reports([monthly_report])[0]
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def _attach_reports(self, submissions):
         result = []

@@ -7,7 +7,9 @@ class ReportRepo:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, user_id: int, project_id: int, task_id: int, text: str) -> DailyReport:
+    def create(
+        self, user_id: int, project_id: int, task_id: int, text: str
+    ) -> DailyReport:
         report = DailyReport(
             user_id=user_id,
             project_id=project_id,
@@ -69,7 +71,9 @@ class ReportRepo:
         self.db.refresh(report)
         return report
 
-    def get_reports_by_project_and_date_range(self, project_id: int, start_date, end_date):
+    def get_reports_by_project_and_date_range(
+        self, project_id: int, start_date, end_date
+    ):
         return (
             self.db.query(DailyReport)
             .filter(
@@ -93,7 +97,9 @@ class ReportRepo:
             .all()
         )
 
-    def create_monthly_submission(self, user_id: int, project_id: int, year: int, month: int, total_reports: int):
+    def create_monthly_submission(
+        self, user_id: int, project_id: int, year: int, month: int, total_reports: int
+    ):
         submission = MonthlyReportSubmission(
             user_id=user_id,
             project_id=project_id,
@@ -153,7 +159,9 @@ class ReportRepo:
             .all()
         )
 
-    def get_monthly_report_by_id(self, monthly_report_id: int) -> MonthlyReportSubmission:
+    def get_monthly_report_by_id(
+        self, monthly_report_id: int
+    ) -> MonthlyReportSubmission:
         return (
             self.db.query(MonthlyReportSubmission)
             .filter(MonthlyReportSubmission.id == monthly_report_id)

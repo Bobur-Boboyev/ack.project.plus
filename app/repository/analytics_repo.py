@@ -270,7 +270,7 @@ class AnalyticsRepo:
             q = q.filter(Project.manager_id == manager_id)
 
         return q.all()
-    
+
     def get_project_status_breakdown(self) -> dict:
         rows = (
             self.db.query(Project.status, func.count(Project.id))
@@ -284,9 +284,7 @@ class AnalyticsRepo:
 
     def get_task_status_breakdown(self) -> dict:
         rows = (
-            self.db.query(Task.status, func.count(Task.id))
-            .group_by(Task.status)
-            .all()
+            self.db.query(Task.status, func.count(Task.id)).group_by(Task.status).all()
         )
         result = {s.value: 0 for s in TaskStatus}
         for status, count in rows:
@@ -299,7 +297,8 @@ class AnalyticsRepo:
                 Task.deadline < datetime.utcnow(),
                 Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELED]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         return result
 
@@ -307,14 +306,16 @@ class AnalyticsRepo:
         return (
             self.db.query(func.count(User.id))
             .filter(User.role == UserRole.WORKER, User.is_active == True)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_workers_reported_today(self) -> int:
         return (
             self.db.query(func.count(func.distinct(DailyReport.user_id)))
             .filter(DailyReport.report_date == date.today())
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_overdue_tasks(self) -> int:
@@ -325,14 +326,16 @@ class AnalyticsRepo:
                 Task.deadline < datetime.utcnow(),
                 Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELED]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_blocked_tasks(self) -> int:
         return (
             self.db.query(func.count(Task.id))
             .filter(Task.status == TaskStatus.BLOCKED)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_deadline_soon_projects(self, days: int = 7) -> int:
@@ -345,7 +348,8 @@ class AnalyticsRepo:
                 Project.deadline <= now + timedelta(days=days),
                 Project.status == ProjectStatus.ACTIVE,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def get_recent_reports(self, limit: int = 8):
@@ -359,7 +363,7 @@ class AnalyticsRepo:
             .limit(limit)
             .all()
         )
-    
+
     def get_manager_project_status_breakdown(self, manager_id: int) -> dict:
         rows = (
             self.db.query(Project.status, func.count(Project.id))
@@ -373,7 +377,7 @@ class AnalyticsRepo:
         return result
 
     def get_manager_task_status_breakdown(self, manager_id: int) -> dict:
-        rows = (    
+        rows = (
             self.db.query(Task.status, func.count(Task.id))
             .join(Project, Project.id == Task.project_id)
             .filter(Project.manager_id == manager_id)
@@ -393,7 +397,8 @@ class AnalyticsRepo:
                 Task.deadline < datetime.utcnow(),
                 Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELED]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         return result
 
@@ -405,7 +410,8 @@ class AnalyticsRepo:
                 Project.manager_id == manager_id,
                 DailyReport.report_date == date.today(),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_manager_overdue_tasks(self, manager_id: int) -> int:
@@ -418,7 +424,8 @@ class AnalyticsRepo:
                 Task.deadline < datetime.utcnow(),
                 Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELED]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def count_manager_blocked_tasks(self, manager_id: int) -> int:
@@ -429,10 +436,13 @@ class AnalyticsRepo:
                 Project.manager_id == manager_id,
                 Task.status == TaskStatus.BLOCKED,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
-    def count_manager_deadline_soon_projects(self, manager_id: int, days: int = 7) -> int:
+    def count_manager_deadline_soon_projects(
+        self, manager_id: int, days: int = 7
+    ) -> int:
         now = datetime.utcnow()
         return (
             self.db.query(func.count(Project.id))
@@ -443,7 +453,8 @@ class AnalyticsRepo:
                 Project.deadline <= now + timedelta(days=days),
                 Project.status == ProjectStatus.ACTIVE,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     def get_manager_recent_reports(self, manager_id: int, limit: int = 8):
@@ -459,7 +470,7 @@ class AnalyticsRepo:
             .limit(limit)
             .all()
         )
-    
+
     def get_worker_task_status_breakdown(self, user_id: int) -> dict:
         rows = (
             self.db.query(Task.status, func.count(Task.id))
@@ -481,7 +492,8 @@ class AnalyticsRepo:
                 Task.deadline < datetime.utcnow(),
                 Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELED]),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         return result
 
@@ -492,7 +504,8 @@ class AnalyticsRepo:
                 DailyReport.user_id == user_id,
                 DailyReport.report_date == date.today(),
             )
-            .first() is not None
+            .first()
+            is not None
         )
 
     def get_worker_recent_reports(self, user_id: int, limit: int = 8):
@@ -514,5 +527,6 @@ class AnalyticsRepo:
                 HelpRequest.requested_by == user_id,
                 HelpRequest.status == HelpRequestStatus.PENDING,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )

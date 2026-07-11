@@ -42,7 +42,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ProjectRes(BaseModel):
+class ProjectResponse(BaseModel):
     id: Optional[int]
     name: Optional[str]
     description: Optional[str]
@@ -54,7 +54,7 @@ class ProjectRes(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ProjectsResponse(BaseModel):
-    items: list[ProjectRes] = []
+    items: list[ProjectResponse] = []
     total: int
     page: int
     limit: int

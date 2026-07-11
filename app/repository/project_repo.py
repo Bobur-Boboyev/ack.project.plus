@@ -61,7 +61,7 @@ class ProjectRepo:
 
         column = SORT_FIELDS.get(params.sort_by, Project.id)
 
-        stmt = stmt.order_by(column.asc() if params.sort_order == "asc" else column.desc())
+        stmt = stmt.order_by(column.asc() if params.order == "asc" else column.desc())
 
         stmt = stmt.offset((params.page - 1) * params.limit).limit(params.limit)
 

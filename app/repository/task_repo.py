@@ -96,7 +96,7 @@ class TaskRepo:
         )
 
     def get_all_tasks(self, params) -> list[Task]:
-        return self.filter_tasks_by_params(params)
+        return self.filter_tasks(params)
 
     def get_by_manager(self, manager_id: int, params) -> list[Task]:
         stmt = (
@@ -105,7 +105,7 @@ class TaskRepo:
             .filter(Project.manager_id == manager_id)
             .all()
         )
-        return self.filter_tasks_by_params(params, stmt)
+        return self.filter_tasks(params, stmt)
 
     def get_by_id(self, task_id: int):
         return self.db.query(Task).filter(Task.id == task_id).first()

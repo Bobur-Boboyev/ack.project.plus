@@ -1,3 +1,6 @@
+from ast import stmt
+import math
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -63,9 +66,20 @@ class ProjectRepo:
 
         stmt = stmt.order_by(column.asc() if params.order == "asc" else column.desc())
 
-        stmt = stmt.offset((params.page - 1) * params.limit).limit(params.limit)
+        count_stmt = select(func.count()).select_from(stmt.order_by(None).subquery())
+        total = self.db.scalar(count_stmt)
 
-        return self.db.execute(stmt).scalars().all()
+        stmt = stmt.offset((params.page - 1) * params.limit).limit(params.limit)
+        items = self.db.execute(stmt).scalars().all()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": params.page,
+            "limit": params.limit,
+            "total_pages": math.ceil(total / params.limit) if total else 1,
+        }
+
 
     def get_user_by_id(self, id: int):
         return self.db.query(User).filter(User.id == id).first()

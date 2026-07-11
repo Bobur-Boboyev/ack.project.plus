@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_admin, get_db, get_user
 from app.schemas.project import (
     ProjectCreateRequest,
-    ProjectResponse,
+    ProjectsResponse,
     UpdateProjectStatusRequest,
     AssignManagerRequest,
     ProjectMemberResponse,
@@ -23,7 +23,7 @@ from app.models.user import User
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
-@router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProjectsResponse, status_code=status.HTTP_201_CREATED)
 def create_project(
     data: ProjectCreateRequest,
     db: Annotated[Session, Depends(get_db)],
@@ -42,7 +42,7 @@ def create_project(
     return project
 
 
-@router.get("/", response_model=List[ProjectResponse], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=ProjectsResponse, status_code=status.HTTP_200_OK)
 def get_projects(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_user)],
@@ -68,7 +68,7 @@ def get_project(
     return project
 
 
-@router.patch("/{project_id}", response_model=ProjectResponse)
+@router.patch("/{project_id}", response_model=ProjectDetailResponse)
 def update_project(
     project_id: Annotated[int, Path()],
     data: UpdateProjectRequest,

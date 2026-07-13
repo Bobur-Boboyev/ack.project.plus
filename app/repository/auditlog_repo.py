@@ -1,8 +1,11 @@
+import math
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.auditlog import AuditLog, AuditAction
 from app.schemas.user import SortOrder
-from app.schemas.auditlog import AuditLogQueryParams
+from app.schemas.auditlog import AuditLogListResponse, AuditLogQueryParams
 
 
 class AuditLogRepo:
@@ -58,9 +61,23 @@ class AuditLogRepo:
         }
         column = SORT_FIELDS.get(params.sort_by.value, AuditLog.created_at)
 
-        stmt = query.order_by(column.asc() if params.order == SortOrder.asc else column.desc())
+        total = query.count()
 
-        return stmt.offset((params.page - 1) * params.limit).limit(params.limit).all()
+        items = (
+            query
+            .order_by(column.asc() if params.order == SortOrder.asc else column.desc())
+            .offset((params.page - 1) * params.limit)
+            .limit(params.limit)
+            .all()
+        )
+
+        return AuditLogListResponse(
+            items=items,
+            total=total,
+            page=params.page,
+            limit=params.limit,
+            total_pages=math.ceil(total / params.limit) if total else 1,
+        )
 
     def get_by_id(self, log_id: int):
         return self.db.query(AuditLog).filter(AuditLog.id == log_id).first()

@@ -38,6 +38,15 @@ class TaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TaskLIstResponse(BaseModel):
+    items: list[TaskResponse]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
+
+
 class TaskAssignmentResponse(BaseModel):
     id: int
     task_id: int

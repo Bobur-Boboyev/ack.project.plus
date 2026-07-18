@@ -23,6 +23,7 @@ from app.schemas.task import (
     TaskAssignmentResponse,
     TaskStatusHistoryResponse,
     TaskQueryParams,
+    TaskLIstResponse
 )
 from app.services.task_service import TaskService
 
@@ -45,7 +46,7 @@ def create_task_view(
     return task
 
 
-@router.get("/tasks", response_model=list[TaskResponse])
+@router.get("/tasks", response_model=TaskLIstResponse)
 def get_tasks_view(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_user)],

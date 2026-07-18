@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from app.models import Base
 
 
-class AuditAction(PyEnum):
+class AuditAction(str, PyEnum):
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"

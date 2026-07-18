@@ -1,3 +1,4 @@
+from math import ceil
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -55,6 +56,9 @@ class TaskRepo:
                 stmt = stmt.filter(Task.deadline < func.now(), Task.deadline.isnot(None), Task.status.notin_(TaskStatus.final_statuses()))
             else:
                 stmt = stmt.filter(Task.deadline >= func.now())
+        
+        count_stmt = stmt.with_only_columns(func.count(Task.id)).order_by(None)
+        total = self.db.execute(count_stmt).scalar()
             
         SORT_FIELDS = {
             TaskSortField.id: Task.id,
@@ -65,10 +69,21 @@ class TaskRepo:
         }
         column = SORT_FIELDS[params.sort_by.value]
 
-        stmt = stmt.order_by(column.asc() if params.order == "asc" else column.desc())
-        stmt = stmt.offset((params.page - 1) * params.limit).limit(params.limit)
+        stmt = (
+            stmt.order_by(column.asc() if params.order == "asc" else column.desc())
+            .offset((params.page - 1) * params.limit)
+            .limit(params.limit)
+        )
 
-        return self.db.execute(stmt).scalars().all()
+        items = self.db.execute(stmt).scalars().all()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": params.page,
+            "limit": params.limit,
+            "total_pages": ceil(total / params.limit) if total else 0,
+        }
 
     def create(self, **kwargs):
         task = Task(**kwargs)

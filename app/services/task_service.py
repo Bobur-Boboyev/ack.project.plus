@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -32,7 +32,7 @@ class TaskService:
         if project.manager_id != current_user.id:
             raise HTTPException(403, "Not your project")
 
-        if data.deadline and data.deadline < datetime.utcnow():
+        if data.deadline and data.deadline < datetime.now(timezone.utc):
             raise HTTPException(400, "Deadline cannot be in the past")
 
         task = self.task_repo.create(

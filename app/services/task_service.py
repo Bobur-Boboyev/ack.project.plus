@@ -235,7 +235,7 @@ class TaskService:
 
         if user.role == UserRole.WORKER:
             params.worker_ids = [user.id]
-            return self.task_repo.filter_tasks(params)
+            return self.task_repo.filter_tasks(params)  
 
         return []
 

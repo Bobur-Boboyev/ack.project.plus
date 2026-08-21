@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta, timezone
-from collections import defaultdict
 from fastapi import HTTPException, status
 
 from app.repository.report_repo import ReportRepo
@@ -98,28 +97,24 @@ class ReportService:
 
         return self.repo.update(report, update_data)
 
-    def get_reports(self, user, params):
+    def get_reports(self, user):
         if user.role == UserRole.ADMIN:
-            pass
+            return self.repo.get_all()
 
-        elif user.role == UserRole.MANAGER:
+        if user.role == UserRole.MANAGER:
             project_ids = self.project_repo.get_user_project_ids(user.id)
 
             if not project_ids:
                 return []
 
-            params.project_ids = project_ids
+            return self.repo.get_by_projects(project_ids)
 
-        elif user.role == UserRole.WORKER:
-            params.user_id = user.id
+        if user.role == UserRole.WORKER:
+            return self.repo.get_report_by_user(user.id)
 
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
-            )
-
-        return self.repo.filter_reports(params)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def get_report(self, report_id: int, user):
         report = self.repo.get_by_id(report_id)
@@ -137,15 +132,21 @@ class ReportService:
         if user.role == UserRole.MANAGER:
             project = self.project_repo.get_project_by_id(report.project_id)
             if not project or project.manager_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return report
 
         if user.role == UserRole.WORKER:
             if report.user_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return report
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def generate_monthly_report(self, user, year: int, month: int, project_id: int):
         if user.role == UserRole.ADMIN:
@@ -243,30 +244,28 @@ class ReportService:
 
         return submission
 
-    def get_monthly_reports(self, user, params):
+    def get_monthly_reports(self, user):
         if user.role == UserRole.ADMIN:
-            pass
+            submissions = self.repo.get_all_monthly_reports()
+            return self._attach_reports(submissions)
 
-        elif user.role == UserRole.MANAGER:
+        if user.role == UserRole.MANAGER:
             project_ids = self.project_repo.get_user_project_ids(user.id)
 
             if not project_ids:
                 return []
 
-            params.project_ids = project_ids
+            # FIX: to'g'ri metod nomi
+            submissions = self.repo.get_monthly_report_by_projects(project_ids)
+            return self._attach_reports(submissions)
 
-        elif user.role == UserRole.WORKER:
-            params.user_id = user.id
+        if user.role == UserRole.WORKER:
+            submissions = self.repo.get_monthly_reports_by_user(user.id)
+            return self._attach_reports(submissions)
 
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
-            )
-
-        submissions = self.repo.filter_monthly_reports(params)
-
-        return self._attach_reports(submissions)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def get_monthly_report_by_id(self, submission_id: int, user: User):
         monthly_report = self.repo.get_monthly_report_by_id(submission_id)
@@ -283,39 +282,36 @@ class ReportService:
         if user.role == UserRole.MANAGER:
             project = self.project_repo.get_project_by_id(monthly_report.project_id)
             if not project or project.manager_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return self._attach_reports([monthly_report])[0]
 
         if user.role == UserRole.WORKER:
             if monthly_report.user_id != user.id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
             return self._attach_reports([monthly_report])[0]
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     def _attach_reports(self, submissions):
-        reports = self.repo.get_reports_for_submissions(submissions)
+        result = []
 
-        grouped = defaultdict(list)
+        for sub in submissions:
+            start, end = self._get_month_range(sub.year, sub.month)
 
-        for report in reports:
-            key = (
-                report.user_id,
-                report.project_id,
-                report.report_date.year,
-                report.report_date.month,
+            reports = self.repo.get_by_user_project_range(
+                sub.user_id,
+                sub.project_id,
+                start,
+                end,
             )
 
-            grouped[key].append(report)
+            sub.reports = reports
+            result.append(sub)
 
-        for submission in submissions:
-            key = (
-                submission.user_id,
-                submission.project_id,
-                submission.year,
-                submission.month,
-            )
-
-            submission.reports = grouped.get(key, [])
-
-        return submissions
+        return result

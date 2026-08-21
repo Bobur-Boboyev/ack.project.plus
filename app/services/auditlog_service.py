@@ -3,14 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.repository.auditlog_repo import AuditLogRepo
 from app.models.user import User, UserRole
-from app.schemas.auditlog import AuditLogQueryParams
 
 
 class AuditLogService:
     def __init__(self, db: Session):
         self.repo = AuditLogRepo(db)
 
-    def get_all(self, current_user: User, params: AuditLogQueryParams):
+    def get_all(self, current_user: User):
         if current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

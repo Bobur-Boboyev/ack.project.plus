@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_user
 from app.services.help_request_service import HelpRequestService
-from app.schemas.help_request import HelpRequestCreate, HelpRequestResponse, HelpRequestQueryParams
+from app.schemas.help_request import HelpRequestCreate, HelpRequestResponse
 from app.models.user import User
 
 
@@ -25,9 +25,8 @@ def create_help_request(
 def get_help_requests(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_user)],
-    params: Annotated[HelpRequestQueryParams, Depends()]
 ):
-    return HelpRequestService(db).get_all(current_user, params)
+    return HelpRequestService(db).get_all(current_user)
 
 
 @router.get("/{request_id}", response_model=HelpRequestResponse)

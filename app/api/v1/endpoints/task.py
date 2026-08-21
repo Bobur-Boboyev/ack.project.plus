@@ -22,8 +22,6 @@ from app.schemas.task import (
     UnassignWorkerRequest,
     TaskAssignmentResponse,
     TaskStatusHistoryResponse,
-    TaskQueryParams,
-    TaskLIstResponse
 )
 from app.services.task_service import TaskService
 
@@ -50,10 +48,9 @@ def create_task_view(
 def get_tasks_view(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_user)],
-    params: Annotated[TaskQueryParams, Depends()],
 ):
     service = TaskService(db)
-    tasks = service.get_tasks(user, params)
+    tasks = service.get_tasks(user)
 
     return tasks
 

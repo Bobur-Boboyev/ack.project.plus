@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.skills import Skill
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repository.skills_repo import SkillRepository as SkillRepo
 
 
@@ -13,9 +13,6 @@ class SkillService:
         self.skill_repo = SkillRepo(db)
 
     def create_skill(self, name: str, admin: User) -> Skill:
-        if not admin.is_admin:
-            raise HTTPException(status_code=403, detail="Only admins can create skills")
-        
         existing_skill = self.skill_repo.get_by_name(name)
         if existing_skill:
             raise HTTPException(status_code=400, detail="Skill with this name already exists")
@@ -32,9 +29,6 @@ class SkillService:
         return skill
     
     def update_skill(self, id: int, name: str, admin: User) -> Skill:
-        if not admin.is_admin:
-            raise HTTPException(status_code=403, detail="Only admins can update skills")
-        
         skill = self.skill_repo.get_by_id(id)
         if not skill:
             raise HTTPException(status_code=404, detail="Skill not found")
@@ -46,9 +40,6 @@ class SkillService:
         return self.skill_repo.update_skill(id, name)
     
     def delete_skill(self, id: int, admin: User):
-        if not admin.is_admin:
-            raise HTTPException(status_code=403, detail="Only admins can delete skills")
-        
         skill = self.skill_repo.get_by_id(id)
         if not skill:
             raise HTTPException(status_code=404, detail="Skill not found")

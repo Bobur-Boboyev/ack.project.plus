@@ -1,5 +1,5 @@
 from math import ceil
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Task, TaskAssignment, Project, TaskStatusHistory, TaskStatus
@@ -12,62 +12,63 @@ class TaskRepo:
 
     def filter_tasks(self, params, stmt=None):
         if stmt is None:
-            stmt = self.db.query(Task)
+            stmt = select(Task)
         
         if params.search:
-            stmt = stmt.filter(
+            stmt = stmt.where(
                 Task.title.ilike(f"%{params.search}%")
                 | Task.description.ilike(f"%{params.search}%")
             )
         
         if params.project_id:
-            stmt = stmt.filter(Task.project_id == params.project_id)
+            stmt = stmt.where(Task.project_id == params.project_id)
         
         if params.manager_id:
-            stmt = stmt.join(Project, Project.id == Task.project_id).filter(
+            stmt = stmt.join(Project, Project.id == Task.project_id).where(
                 Project.manager_id == params.manager_id
             )
         
         if params.worker_ids:
-            stmt = stmt.join(TaskAssignment, TaskAssignment.task_id == Task.id).filter(
+            stmt = stmt.join(TaskAssignment, TaskAssignment.task_id == Task.id).where(
                 TaskAssignment.user_id.in_(params.worker_ids)
             )
         
         if params.status:
-            stmt = stmt.filter(Task.status.in_(params.status))
+            stmt = stmt.where(Task.status.in_(params.status))
         
         if params.ids:
-            stmt = stmt.filter(Task.id.in_(params.ids))
+            stmt = stmt.where(Task.id.in_(params.ids))
 
         if params.created_from:
-            stmt = stmt.filter(Task.created_at >= params.created_from)
+            stmt = stmt.where(Task.created_at >= params.created_from)
         
         if params.created_to:
-            stmt = stmt.filter(Task.created_at <= params.created_to)
+            stmt = stmt.where(Task.created_at <= params.created_to)
         
         if params.deadline_from:
-            stmt = stmt.filter(Task.deadline >= params.deadline_from)
+            stmt = stmt.where(Task.deadline >= params.deadline_from)
         
         if params.deadline_to:
-            stmt = stmt.filter(Task.deadline <= params.deadline_to)
+            stmt = stmt.where(Task.deadline <= params.deadline_to)
         
         if params.expired is not None:
             if params.expired:
-                stmt = stmt.filter(Task.deadline < func.now(), Task.deadline.isnot(None), Task.status.notin_(TaskStatus.final_statuses()))
+                stmt = stmt.where(Task.deadline < func.now(), Task.deadline.isnot(None), Task.status.notin_(TaskStatus.final_statuses()))
             else:
-                stmt = stmt.filter(Task.deadline >= func.now())
+                stmt = stmt.where(Task.deadline >= func.now())
         
-        count_stmt = stmt.with_only_columns(func.count(Task.id)).order_by(None)
-        total = self.db.execute(count_stmt).scalar()
+        count_stmt = select(func.count()).select_from(stmt.order_by(None).subquery())
+        total = self.db.scalar(count_stmt)
             
         SORT_FIELDS = {
             TaskSortField.id: Task.id,
+            TaskSortField.project_id: Task.project_id,
             TaskSortField.title: Task.title,
             TaskSortField.status: Task.status,
             TaskSortField.deadline: Task.deadline,
             TaskSortField.created_at: Task.created_at,
         }
-        column = SORT_FIELDS[params.sort_by.value]
+        column = SORT_FIELDS.get(params.sort_by, Task.created_at)
 
         stmt = (
             stmt.order_by(column.asc() if params.order == "asc" else column.desc())
@@ -115,10 +116,9 @@ class TaskRepo:
 
     def get_by_manager(self, manager_id: int, params) -> list[Task]:
         stmt = (
-            self.db.query(Task)
+            select(Task)
             .join(Project, Project.id == Task.project_id)
-            .filter(Project.manager_id == manager_id)
-            .all()
+            .where(Project.manager_id == manager_id)
         )
         return self.filter_tasks(params, stmt)
 

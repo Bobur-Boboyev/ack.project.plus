@@ -147,19 +147,21 @@ def get_task_history(
     return service.get_task_history(task_id=id, user=user)
 
 
-@router.get("/my/tasks", response_model=list[TaskResponse])
+@router.get("/my/tasks", response_model=TaskLIstResponse)
 def get_my_tasks(
     db: Annotated[Session, Depends(get_db)],
     worker: Annotated[User, Depends(get_worker)],
+    params: Annotated[TaskQueryParams, Depends()],
 ):
     service = TaskService(db)
-    return service.get_tasks(user=worker)
+    return service.get_tasks(user=worker, params=params)
 
 
-@router.get("/manager/tasks", response_model=list[TaskResponse])
-def get_my_tasks(
+@router.get("/manager/tasks", response_model=TaskLIstResponse)
+def get_manager_tasks(
     db: Annotated[Session, Depends(get_db)],
     manager: Annotated[User, Depends(get_manager)],
+    params: Annotated[TaskQueryParams, Depends()],
 ):
     service = TaskService(db)
-    return service.get_tasks(user=manager)
+    return service.get_tasks(user=manager, params=params)

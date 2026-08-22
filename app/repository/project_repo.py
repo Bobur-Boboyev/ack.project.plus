@@ -99,7 +99,7 @@ class ProjectRepo:
         return self.filter_projects_by_params(params, stmt=stmt)
 
     def get_projects_by_user(self, user_id: int, params: ProjectQueryParams):
-        stmt = select(Project).where(Project.members.any(User.id == user_id))
+        stmt = select(Project).where(Project.members.any(ProjectMember.user_id == user_id))
 
         return self.filter_projects_by_params(params, stmt=stmt)
 

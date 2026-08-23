@@ -91,8 +91,12 @@ class TaskService:
         if not task:
             raise HTTPException(404, "Task not found")
 
-        if not self.task_repo.get_assignment(task_id, user.id):
-            raise HTTPException(403, "You are not assigned to this task")
+        is_assigned = self.task_repo.get_assignment(task_id, user.id) is not None
+        is_manager = user.role == UserRole.MANAGER and task.project.manager_id == user.id
+        is_admin = user.role == UserRole.ADMIN
+
+        if not (is_assigned or is_manager or is_admin):
+            raise HTTPException(403, "You do not have permission to update this task status")
 
         if task.status.is_final():
             raise HTTPException(400, "Task already completed or canceled")
@@ -217,11 +221,11 @@ class TaskService:
         if not task:
             raise HTTPException(404, "Task not found")
 
-        if user.role != UserRole.MANAGER:
-            raise HTTPException(403, "Only manager can view assignments")
-
-        if task.project.manager_id != user.id:
+        if user.role == UserRole.MANAGER and task.project.manager_id != user.id:
             raise HTTPException(403, "Not allowed")
+        elif user.role == UserRole.WORKER:
+            if not self.project_repo.is_project_member(task.project_id, user.id):
+                raise HTTPException(403, "Not allowed")
 
         return self.task_repo.get_assignments(task_id)
 

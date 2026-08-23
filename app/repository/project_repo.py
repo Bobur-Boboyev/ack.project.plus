@@ -191,3 +191,11 @@ class ProjectRepo:
             .filter(ProjectMember.user_id == user_id)
             .all()
         ]
+
+    def get_manager_project_ids(self, manager_id: int) -> list[int]:
+        return [
+            p.id
+            for p in self.db.query(Project.id)
+            .filter(Project.manager_id == manager_id)
+            .all()
+        ]

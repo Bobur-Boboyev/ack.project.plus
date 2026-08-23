@@ -128,12 +128,12 @@ def unassign_worker_view(
 def get_assignments(
     id: Annotated[int, Path()],
     db: Annotated[Session, Depends(get_db)],
-    manager: Annotated[User, Depends(get_manager)],
+    user: Annotated[User, Depends(get_user)],
 ):
     service = TaskService(db)
     return service.get_task_assignments(
         task_id=id,
-        user=manager,
+        user=user,
     )
 
 

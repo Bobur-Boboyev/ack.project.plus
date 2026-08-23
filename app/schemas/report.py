@@ -18,6 +18,16 @@ class CreateDailyReport(BaseModel):
     report_date: date = Field(default_factory=date.today)  # ← qo'shing
 
 
+class ReportFileResponse(BaseModel):
+    id: int
+    original_name: Optional[str]
+    content_type: str
+    size: int
+    url: str
+
+    model_config = {"from_attributes": True}
+
+
 class ReportResponse(BaseModel):
     id: int = Field(..., gt=0)
     user_id: int = Field(..., gt=0)
@@ -26,6 +36,9 @@ class ReportResponse(BaseModel):
     text: str
     report_date: date
     created_at: datetime
+    file_id: Optional[int] = None
+    file_ids: list[int] = []
+    files: list[ReportFileResponse] = []
 
     model_config = {"from_attributes": True}
 
@@ -38,6 +51,9 @@ class ReportDetailResponse(BaseModel):
     text: str | None = None
     report_date: date
     created_at: datetime
+    file_id: Optional[int] = None
+    file_ids: list[int] = []
+    files: list[ReportFileResponse] = []
 
     model_config = {"from_attributes": True}
 

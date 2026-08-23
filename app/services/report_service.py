@@ -103,7 +103,7 @@ class ReportService:
             pass
 
         elif user.role == UserRole.MANAGER:
-            project_ids = self.project_repo.get_user_project_ids(user.id)
+            project_ids = self.project_repo.get_manager_project_ids(user.id)
 
             if not project_ids:
                 return []
